@@ -1,4 +1,6 @@
 import { Hono } from 'hono'
+import { logger } from 'hono/logger'
+import { handleError, handleNotFound } from './http'
 
 /**
  * Everything the app needs from the outside world. `index.ts` builds the real ones;
@@ -9,6 +11,11 @@ export interface AppDeps {}
 /** Builds the Hono app. Must never read `process.env`: config arrives through `deps`. */
 export function createApp(_deps: AppDeps = {}) {
   const app = new Hono()
+
+  // Logs method, path, status and timing only; request bodies are never logged.
+  app.use('/api/*', logger())
+  app.onError(handleError)
+  app.notFound(handleNotFound)
 
   app.get('/api/health', c => c.json({ ok: true }))
 

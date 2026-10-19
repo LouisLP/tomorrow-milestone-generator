@@ -6,6 +6,7 @@
     "module": "preserve",
     "moduleResolution": "bundler",
     "paths": {
+      "@shared": ["./src/shared/index.ts"],
       "@shared/*": ["./src/shared/*"]
     },
     "types": ["node"],
