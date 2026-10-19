@@ -4,6 +4,47 @@ Staff write a Challenge (a title and a Brief), ask Claude for 3 to 5 Draft Miles
 
 The capitalized terms each mean one thing, in the code and in the UI. See [`GLOSSARY.md`](GLOSSARY.md).
 
+![Reviewing Draft Milestones: two accepted, one rejected, the next one in focus](docs/screenshots/review.png)
+
+## Contents
+
+- [Tour](#tour)
+- [Setup](#setup)
+  - [Configuration](#configuration)
+- [How it's built](#how-its-built)
+  - [Stack choice](#stack-choice)
+  - [Persistence](#persistence)
+  - [Prompt + schema approach](#prompt--schema-approach)
+  - [Failure handling](#failure-handling)
+- [Testing](#testing)
+- [Trade-offs and follow-ups](#trade-offs-and-follow-ups)
+
+## Tour
+
+### 1. Challenges
+
+Every saved Challenge, most recently updated first.
+
+![Challenge list with three saved Challenges](docs/screenshots/challenge-list.png)
+
+### 2. Write a Challenge
+
+A title and a Brief. The Brief's language decides the language of the drafts.
+
+![New Challenge form with a title and Brief filled in](docs/screenshots/new-challenge.png)
+
+### 3. Review the drafts
+
+The form folds into a strip and the drafts come up one at a time. Accept, reject, skip or click the text to edit it, by mouse or with the <kbd>A</kbd> <kbd>R</kbd> <kbd>S</kbd> <kbd>E</kbd> keys. Decided drafts land in the rail on the right, and Save takes only the accepted ones. See the screenshot [at the top](#milestone-generator).
+
+### 4. The saved Challenge
+
+Title, Brief and Milestones are all editable in place. Generating from here appends to the existing Milestones instead of replacing them.
+
+![Saved Challenge with its Brief and numbered Milestones](docs/screenshots/challenge-detail.png)
+
+<sub>[Back to top](#milestone-generator)</sub>
+
 ## Setup
 
 You need Node 22.18+ and pnpm 12 (pinned in `packageManager`, so `corepack enable` picks the right one).
@@ -18,6 +59,10 @@ pnpm test
 
 The database and its folder are created on first boot.
 
+### Configuration
+
+Set these in `.env`.
+
 | Variable            | Default             |                                                   |
 | ------------------- | ------------------- | ------------------------------------------------- |
 | `ANTHROPIC_API_KEY` | required            | The server exits at boot if it's missing.         |
@@ -25,7 +70,11 @@ The database and its folder are created on first boot.
 | `DATABASE_URL`      | `./data/app.db`     | SQLite file path, or `:memory:`.                  |
 | `CLAUDE_MODEL`      | `claude-sonnet-5-5` | Model used for generation.                        |
 
-## Stack choice
+<sub>[Back to top](#milestone-generator)</sub>
+
+## How it's built
+
+### Stack choice
 
 It's one package with three folders: `src/client`, `src/server` and `src/shared`. A monorepo or Nuxt would be more machinery than four screens need.
 
@@ -37,13 +86,13 @@ It's one package with three folders: `src/client`, `src/server` and `src/shared`
 - Kabuki tokens: my own CSS custom properties, with vanilla scoped CSS on top.
 - vue-i18n (en, de, it): the server returns only error codes, and the client translates them.
 
-## Persistence
+### Persistence
 
 SQLite at `DATABASE_URL`, with committed migrations applied at every boot. A Challenge is written only at Save, together with its accepted Milestones, in one transaction. A Challenge with no Milestones is never saved.
 
 Draft Milestones live only in browser memory. Never the database, never `localStorage`.
 
-## Prompt + schema approach
+### Prompt + schema approach
 
 The system prompt is static, in `src/server/llm/prompt.ts`:
 
@@ -82,7 +131,7 @@ Drafts come back in the Brief's language. The UI locale is never sent.
 
 On prompt injection: the tags are declared as data but not escaped, and I don't pretend that stops a determined Brief. The backstop is the output shape plus the human. The model can only return 3 to 5 short text pairs, nothing is rendered as HTML, and nothing is saved until someone accepts it.
 
-## Failure handling
+### Failure handling
 
 Every error response is `{ error: { code, issues? } }`. No messages or stack traces leave the server, and request bodies are never logged.
 
@@ -103,11 +152,15 @@ Failures show inline with a Retry button, never as a toast. A failed generate ch
 
 Retry policy: each Claude call times out at 45 s, and the SDK retries transport errors twice. The server adds one attempt on `generation_invalid` only. A 90 s deadline caps the lot. The client never retries on its own, but staff can Cancel, and after 10 s they're told it can take up to a minute.
 
+<sub>[Back to top](#milestone-generator)</sub>
+
 ## Testing
 
 Vitest covers the logic where a bug would be expensive or invisible: the shared schemas and env parser, the prompt builder, the `stop_reason`/SDK-error mapping, the retry wrapper (deadline, cancel, no logging of input), every API route against in-memory SQLite, and the client's fetch wrapper and draft state (decisions, edits, undo, regenerate).
 
 There are no UI or end-to-end tests, and no live-API tests. The components are thin over tested composables, and live calls would be slow, flaky and cost money every run.
+
+<sub>[Back to top](#milestone-generator)</sub>
 
 ## Trade-offs and follow-ups
 
@@ -120,3 +173,5 @@ There are no UI or end-to-end tests, and no live-API tests. The components are t
 - No reordering. Order is the AI's, with appends at the end.
 
 First follow-up: a small eval set of about 10 Briefs (mixed lengths, languages, a couple hostile). Right now the prompt is tuned by eye, so there's no way to tell whether a change made it better or worse.
+
+<sub>[Back to top](#milestone-generator)</sub>
