@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import { createApp } from '../app'
+import { createDb } from '../db'
 import { ApiError, handleError, handleNotFound } from './errors'
 import { validateJson } from './validate'
 
@@ -88,7 +89,7 @@ describe('error handling', () => {
   it('answers unknown routes with a JSON 404', async () => {
     vi.spyOn(console, 'log').mockImplementation(() => {})
 
-    const res = await createApp({}).request('/api/nope')
+    const res = await createApp({ db: createDb(':memory:') }).request('/api/nope')
 
     expect(res.status).toBe(404)
     expect(await res.json()).toEqual({ error: { code: 'not_found' } })

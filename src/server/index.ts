@@ -2,6 +2,7 @@ import process from 'node:process'
 import { serve } from '@hono/node-server'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { createApp } from './app'
+import { createDb } from './db'
 import { parseEnv } from './env'
 
 const parsed = parseEnv(process.env)
@@ -11,7 +12,8 @@ if (!parsed.ok) {
 }
 const { env } = parsed
 
-const app = createApp({})
+const db = createDb(env.DATABASE_URL)
+const app = createApp({ db })
 
 if (env.NODE_ENV === 'production') {
   // Serve the built SPA; any non-file path falls back to index.html so deep links reload.

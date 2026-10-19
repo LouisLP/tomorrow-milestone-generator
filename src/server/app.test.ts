@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { createApp } from './app'
+import { createDb } from './db'
 
 describe('createApp', () => {
   it('responds to the health check', async () => {
-    const app = createApp({})
+    const app = createApp({ db: createDb(':memory:') })
 
     const res = await app.request('/api/health')
 
