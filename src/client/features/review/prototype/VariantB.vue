@@ -7,11 +7,10 @@
   auto-accepted. Queue-wide actions (accept remaining, save) live outside the card.
 -->
 <script setup lang="ts">
-import { CollapsibleContent, CollapsibleRoot, CollapsibleTrigger, DialogClose, DialogContent, DialogOverlay, DialogPortal, DialogRoot, DialogTitle, EditableArea, EditableInput, EditablePreview, EditableRoot, ProgressRoot } from 'reka-ui'
+import { DialogClose, DialogContent, DialogOverlay, DialogPortal, DialogRoot, DialogTitle, EditableArea, EditableInput, EditablePreview, EditableRoot } from 'reka-ui'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import IconCheck from '~icons/lucide/check'
 import IconCheckCheck from '~icons/lucide/check-check'
-import IconChevron from '~icons/lucide/chevron-down'
 import IconChevronUp from '~icons/lucide/chevron-up'
 import IconPlus from '~icons/lucide/plus'
 import IconSkip from '~icons/lucide/skip-forward'
@@ -80,6 +79,21 @@ function doUndo() {
   if (undo()) {
     flash('Undone')
     currentKey.value = undefined
+  }
+}
+
+/** progress segment click: reset that draft to undecided and make it the current card */
+function jumpTo(key: string) {
+  const d = drafts.value.find(x => x.key === key)
+  if (!d || d.pending)
+    return
+  if (d.state !== 'undecided') {
+    flash(`“${d.title}” is back in the queue`)
+    moveBack(d)
+  }
+  else {
+    skippedKeys.value = skippedKeys.value.filter(k => k !== key)
+    currentKey.value = key
   }
 }
 
@@ -157,17 +171,22 @@ const confirmEarlySave = ref(false)
     </h2>
 
     <div class="stage">
-      <!-- one segment per AI draft, in order, coloured by its fate -->
-      <ProgressRoot :model-value="reviewed" :max="Math.max(reviewable, 1)" class="progress" :aria-label="`${reviewed} of ${reviewable} reviewed`">
-        <span
-          v-for="s in segments"
-          :key="s.key"
-          class="segment"
-          :data-state="s.state"
-          :data-current="s.key === current?.key || undefined"
-          :title="s.title ? `${s.title}: ${s.state}` : undefined"
-        />
-      </ProgressRoot>
+      <!-- one segment per AI draft, in order, coloured by its fate; click to jump back to it -->
+      <nav aria-label="Drafts">
+        <ol class="progress">
+          <li v-for="(seg, i) in segments" :key="seg.key">
+            <button
+              class="segment"
+              :data-state="seg.state"
+              :aria-current="seg.key === current?.key ? 'step' : undefined"
+              :disabled="seg.state === 'pending'"
+              :aria-label="`Draft ${i + 1}: ${seg.title} (${seg.state})`"
+              :title="seg.title ? `${seg.title} (${seg.state})` : undefined"
+              @click="jumpTo(seg.key)"
+            />
+          </li>
+        </ol>
+      </nav>
       <div class="queue-bar">
         <p class="progress-label">
           {{ status === 'generating' ? 'Drafting…' : `${reviewed} of ${reviewable} reviewed` }}
@@ -249,7 +268,9 @@ const confirmEarlySave = ref(false)
     </div>
 
     <aside class="rail" aria-label="Decided drafts">
-      <h3>Accepted <span class="count">{{ accepted.length }}</span></h3>
+      <h3 class="rail-heading">
+        Accepted <span class="count">{{ accepted.length }}</span>
+      </h3>
       <ol class="mini-list">
         <li v-for="d in accepted" :key="d.key" class="mini" :data-open="expandedKey === d.key || undefined">
           <div class="mini-head">
@@ -306,21 +327,22 @@ const confirmEarlySave = ref(false)
         <IconPlus /> Add your own
       </button>
 
-      <CollapsibleRoot v-if="rejected.length" class="rejected">
-        <CollapsibleTrigger class="btn collapse-trigger" data-variant="ghost">
-          Rejected <span class="count">{{ rejected.length }}</span> <IconChevron />
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <ol class="mini-list">
-            <li v-for="d in rejected" :key="d.key" class="mini" data-state="rejected">
-              <s>{{ d.title }}</s>
-              <button class="btn icon" data-variant="ghost" aria-label="Move back to queue" @click="moveBack(d)">
-                <IconUndo />
-              </button>
-            </li>
-          </ol>
-        </CollapsibleContent>
-      </CollapsibleRoot>
+      <h3 class="rail-heading">
+        Rejected <span class="count">{{ rejected.length }}</span>
+      </h3>
+      <ol class="mini-list">
+        <li v-for="d in rejected" :key="d.key" class="mini" data-state="rejected">
+          <div class="mini-head">
+            <s class="mini-title">{{ d.title }}</s>
+            <button class="btn icon" data-variant="ghost" aria-label="Move back to queue" @click="moveBack(d)">
+              <IconUndo />
+            </button>
+          </div>
+        </li>
+        <li v-if="!rejected.length" class="empty">
+          Nothing yet
+        </li>
+      </ol>
 
       <div class="rail-save">
         <button class="btn" data-variant="ghost" :disabled="!canSave" @click="onSaveClick">
@@ -380,18 +402,36 @@ const confirmEarlySave = ref(false)
 .triage { display: grid; gap: var(--space-xl); grid-template-columns: minmax(0, 1fr); align-items: start; }
 @media (min-width: 52rem) { .triage { grid-template-columns: minmax(0, 1fr) 18rem; } }
 .stage { display: grid; gap: var(--space-sm); }
-.progress { display: flex; gap: 3px; height: 6px; }
+.progress { display: flex; gap: 3px; }
+.progress li { flex: 1; }
+/* fixed-size hit area; the visible bar is ::before, so hover/current never moves layout */
 .segment {
-  flex: 1;
+  display: block;
+  width: 100%;
+  height: 1.25rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.segment:disabled { cursor: default; }
+.segment::before {
+  content: '';
+  display: block;
+  height: 6px;
+  margin-block: calc((1.25rem - 6px) / 2);
   border-radius: var(--radius-full);
   background: var(--color-bg-surface-raised);
-  transition: background var(--duration-normal) var(--ease-out), scale var(--duration-fast) var(--ease-out);
+  transition: background var(--duration-normal) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
 }
-.segment[data-state='accepted'] { background: var(--color-success-default); }
-.segment[data-state='rejected'] { background: var(--color-danger-default); }
-.segment[data-state='skipped'] { background: var(--color-warning-default); }
-.segment[data-state='pending'] { background: var(--color-bg-surface-hover); }
-.segment[data-current] { outline: var(--border-width-thin) solid var(--color-text-secondary); outline-offset: 2px; }
+.segment[data-state='accepted']::before { background: var(--color-success-default); }
+.segment[data-state='rejected']::before { background: var(--color-danger-default); }
+.segment[data-state='skipped']::before { background: var(--color-warning-default); }
+.segment[data-state='pending']::before { background: var(--color-bg-surface-hover); }
+.segment:hover:not(:disabled)::before { box-shadow: 0 0 0 2px var(--color-border-default); }
+.segment[aria-current='step']::before { box-shadow: 0 0 0 2px var(--color-bg-canvas), 0 0 0 3px var(--color-text-secondary); }
+.segment:focus-visible { outline: none; }
+.segment:focus-visible::before { box-shadow: 0 0 0 2px var(--color-bg-canvas), 0 0 0 4px var(--color-focus-ring); }
 .progress-label { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); font-size: var(--font-size-sm); color: var(--color-text-muted); }
 .legend { display: inline-flex; align-items: center; gap: var(--space-2xs); }
 .legend::before { content: ''; width: 0.5rem; height: 0.5rem; border-radius: var(--radius-full); }
@@ -432,6 +472,7 @@ const confirmEarlySave = ref(false)
   color: var(--color-secondary-subtle-fg);
 }
 .rail { display: grid; gap: var(--space-xs); position: sticky; top: var(--space-lg); }
+.rail-heading:not(:first-child) { margin-top: var(--space-md); }
 .rail h3 { font-size: var(--font-size-md); display: flex; gap: var(--space-xs); align-items: center; }
 .count { font-family: var(--font-code); font-size: var(--font-size-xs); color: var(--color-text-muted); }
 .mini-list { display: grid; gap: var(--space-2xs); }
@@ -450,14 +491,13 @@ const confirmEarlySave = ref(false)
 .mini-edit-title { font-weight: var(--font-weight-semibold); }
 .mini-edit-desc { color: var(--color-text-secondary); display: block; }
 .mini-actions { display: flex; justify-content: flex-end; }
-.mini[data-state='rejected'] { display: flex; align-items: center; gap: var(--space-2xs); background: var(--color-danger-subtle-bg); color: var(--color-danger-subtle-fg); }
+.mini[data-state='rejected'] { background: var(--color-danger-subtle-bg); color: var(--color-danger-subtle-fg); }
 .mini[data-state='rejected'] s { text-decoration-color: oklch(from currentcolor l c h / 0.5); }
-.mini[data-state='rejected'] s { flex: 1; }
+s.mini-title { cursor: default; }
 .mini-title { flex: 1; text-align: start; border: 0; background: none; color: inherit; cursor: pointer; font: inherit; }
 .mini-title:hover { text-decoration: underline; }
 .icon { padding: var(--space-2xs); }
 .empty { font-size: var(--font-size-sm); color: var(--color-text-muted); }
-.collapse-trigger { width: 100%; justify-content: flex-start; }
 .snack {
   position: fixed;
   bottom: 4.5rem;
