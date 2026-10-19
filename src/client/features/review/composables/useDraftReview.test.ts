@@ -1,5 +1,5 @@
 import type { GenerateResponse, MilestoneContent } from '@shared'
-import type { ApiResult } from '../../api'
+import type { ApiResult } from '../../../api'
 import type { DraftReviewOptions } from './useDraftReview'
 import { MILESTONE_CAP } from '@shared'
 import { describe, expect, it, vi } from 'vitest'

@@ -1,10 +1,6 @@
 <!--
-  Every confirm in the app (Reka AlertDialog). `confirm` may be async: while it runs the
-  confirm button shows a spinner and the dialog can't be dismissed. It closes the dialog on
-  success. To report a failure, resolve with the (translated) message, or reject and the
-  dialog shows `errorFallback`; either way it stays open with the error inside. Focus goes
-  back to the trigger on close; when the trigger is gone, handle `closeAutoFocus` (call
-  `preventDefault()` and move focus yourself).
+  `confirm` resolves with an error message to stay open, or nothing to close. When the
+  trigger is gone, handle `closeAutoFocus` to move focus yourself.
 -->
 <script setup lang="ts">
 import { AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogOverlay, AlertDialogPortal, AlertDialogRoot, AlertDialogTitle } from 'reka-ui'

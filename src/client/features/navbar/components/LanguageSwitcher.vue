@@ -13,7 +13,7 @@ import {
 import { useI18n } from 'vue-i18n'
 import IconCheck from '~icons/lucide/check'
 import IconLanguages from '~icons/lucide/languages'
-import { isLocale, LOCALES, setLocale } from '../i18n'
+import { isLocale, LOCALES, setLocale } from '../../../i18n'
 
 const { t, locale } = useI18n()
 
@@ -25,7 +25,7 @@ function onSelect(value: AcceptableValue) {
 
 <template>
   <SelectRoot :model-value="locale" @update:model-value="onSelect">
-    <SelectTrigger class="trigger" :aria-label="t('language.label')">
+    <SelectTrigger class="icon-control" :aria-label="t('navbar.language')">
       <IconLanguages aria-hidden="true" />
       <span>{{ locale.toUpperCase() }}</span>
     </SelectTrigger>
@@ -51,26 +51,7 @@ function onSelect(value: AcceptableValue) {
 </template>
 
 <style scoped>
-.trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-  padding: var(--space-xs) var(--space-sm);
-  border: var(--border-width-thin) solid var(--color-border-default);
-  border-radius: var(--radius-md);
-  background-color: var(--color-bg-surface);
-  color: var(--color-text-primary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-  transition: background-color var(--duration-fast) var(--ease-out);
-}
-
-.trigger:hover {
-  background-color: var(--color-bg-surface-hover);
-}
-
-/* Reka puts the scope attribute on its popper wrapper, not on the content itself */
+/* Scoped styles miss the portalled content */
 :deep(.content) {
   min-width: 10rem;
   padding: var(--space-xs);

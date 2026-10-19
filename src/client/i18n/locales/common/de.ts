@@ -5,9 +5,6 @@ export default {
     name: 'Meilenstein-Generator',
     skipToContent: 'Zum Hauptinhalt springen',
   },
-  language: {
-    label: 'Sprache',
-  },
   actions: {
     cancel: 'Abbrechen',
     confirm: 'Bestätigen',

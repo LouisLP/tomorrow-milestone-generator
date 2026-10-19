@@ -6,16 +6,13 @@ import { handleError, handleNotFound } from './http'
 import { challengeRoutes } from './routes/challenges'
 import { generateRoutes } from './routes/generate'
 
-/**
- * Everything the app needs from the outside world. `index.ts` builds the real ones;
- * tests pass fakes (e.g. an in-memory `db`, a stub `generator`).
- */
+/** Tests pass fakes; `index.ts` builds the real ones. */
 export interface AppDeps {
   db: Db
   generator: Generator
 }
 
-/** Builds the Hono app. Must never read `process.env`: config arrives through `deps`. */
+/** Never reads `process.env`: config arrives through `deps`. */
 export function createApp(deps: AppDeps) {
   const app = new Hono()
 

@@ -1,8 +1,3 @@
-<!--
-  New Challenge (#4, #6, #7): title + Brief → Generate → review queue → Save → detail page.
-  Nothing is persisted before Save. Once drafts exist the form folds to a one-line strip
-  and the review queue owns the page.
--->
 <script setup lang="ts">
 import type { MilestoneContent } from '@shared'
 import { computed, nextTick, ref, useTemplateRef } from 'vue'
@@ -11,12 +6,12 @@ import { useRouter } from 'vue-router'
 import IconArrowLeft from '~icons/lucide/arrow-left'
 import IconPencil from '~icons/lucide/pencil'
 import IconRefresh from '~icons/lucide/refresh-cw'
-import { createChallenge } from '../../../api'
 import { fieldErrors } from '../../../i18n'
 import UniButton from '../../../ui/UniButton.vue'
-import DraftingDialogs from '../../review/DraftingDialogs.vue'
-import ReviewQueue from '../../review/ReviewQueue.vue'
-import { useDraftingFlow } from '../../review/useDraftingFlow'
+import DraftingDialogs from '../../review/components/DraftingDialogs.vue'
+import ReviewQueue from '../../review/components/ReviewQueue.vue'
+import { useDraftingFlow } from '../../review/composables/useDraftingFlow'
+import { createChallenge } from '../api/challenges.api'
 import ChallengeForm from '../components/ChallengeForm.vue'
 
 const { t } = useI18n()
@@ -31,16 +26,15 @@ const errors = computed(() => fieldErrors(flow.issues.value))
 const generating = computed(() => review.status.value === 'generating')
 const drafted = computed(() => review.drafts.value.length > 0)
 
-// Once drafts exist the form folds to the strip; Edit details opens it again
+// Once drafts exist the form folds into the strip
 const detailsOpen = ref(false)
 const showForm = computed(() => !drafted.value || detailsOpen.value)
 
 const form = useTemplateRef('form')
 const editDetailsButton = useTemplateRef('editDetailsButton')
 
-/** Opens the form with its field errors and focuses the first one. */
 async function showErrors() {
-  // Before drafts exist the form is already showing; opening it would keep it from folding later
+  // Before drafts exist the form is showing anyway, and opening it would stop it folding later
   if (drafted.value)
     detailsOpen.value = true
   await nextTick()
@@ -138,7 +132,7 @@ async function onSave(accepted: MilestoneContent[]) {
 <style scoped>
 .page {
   display: grid;
-  /* minmax(0, …): the strip's nowrap text must not widen the page */
+  /* minmax(0, …): the strip's nowrap text mustn't widen the page */
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-lg);
   max-inline-size: 72rem;

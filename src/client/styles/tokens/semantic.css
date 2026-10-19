@@ -48,16 +48,18 @@
   --color-text-secondary: light-dark(var(--sumi-600), var(--sumi-300));
   --color-text-muted: light-dark(var(--sumi-500), var(--sumi-400));
 
-  /* Dark theme's kaki is darker than light theme's, so the two themes need
-     opposite ink: black wins on the light theme's mid kaki, white wins on
+  /* Opposite ink per theme: black on the light theme's mid kaki, white on
      the dark theme's deeper kaki */
   --color-text-on-accent: light-dark(var(--sumi-950), var(--sumi-50));
+  /* Seiji is deep enough for white ink in both themes */
+  --color-text-on-secondary: var(--sumi-50);
 
   /* ------------------------------------------------------------------ */
   /* Accent — primary interactive (kaki)                                 */
   /* ------------------------------------------------------------------ */
   --color-accent-default: light-dark(var(--kaki-600), var(--kaki-700));
-  --color-accent-hover: light-dark(var(--kaki-500), var(--kaki-600));
+  /* Hover moves away from the ink, so the label keeps AA contrast */
+  --color-accent-hover: light-dark(var(--kaki-500), var(--kaki-800));
   --color-accent-active: light-dark(var(--kaki-700), var(--kaki-800));
   --color-accent-subtle-bg: light-dark(var(--kaki-50), var(--kaki-950));
   --color-accent-subtle-fg: light-dark(var(--kaki-800), var(--kaki-300));
@@ -69,9 +71,9 @@
   /* ------------------------------------------------------------------ */
   /* Secondary — co-equal interactive role (seiji)                       */
   /* ------------------------------------------------------------------ */
-  --color-secondary-default: light-dark(var(--seiji-600), var(--seiji-500));
-  --color-secondary-hover: light-dark(var(--seiji-500), var(--seiji-400));
-  --color-secondary-active: light-dark(var(--seiji-700), var(--seiji-600));
+  --color-secondary-default: var(--seiji-600);
+  --color-secondary-hover: var(--seiji-700);
+  --color-secondary-active: var(--seiji-800);
   --color-secondary-subtle-bg: light-dark(var(--seiji-50), var(--seiji-950));
   --color-secondary-subtle-fg: light-dark(var(--seiji-800), var(--seiji-300));
   --color-secondary-border: light-dark(var(--seiji-300), var(--seiji-700));
@@ -85,6 +87,7 @@
 
   /* Danger (beni) — destructive actions, failures, rejected drafts */
   --color-danger-default: light-dark(var(--beni-600), var(--beni-500));
+  --color-danger-hover: light-dark(var(--beni-700), oklch(from var(--beni-500) calc(l + 0.06) c h));
   --color-danger-subtle-bg: light-dark(var(--beni-50), var(--beni-950));
   --color-danger-subtle-fg: light-dark(var(--beni-800), var(--beni-300));
   --color-danger-border: light-dark(var(--beni-300), var(--beni-700));
@@ -93,7 +96,7 @@
   --color-text-on-danger: light-dark(var(--sumi-50), var(--sumi-950));
 
   /* Warning (ukon) — caution states, e.g. skipped drafts */
-  --color-warning-default: light-dark(var(--ukon-600), var(--ukon-500));
+  --color-warning-default: light-dark(var(--ukon-700), var(--ukon-500));
   --color-warning-subtle-bg: light-dark(var(--ukon-50), var(--ukon-950));
   --color-warning-subtle-fg: light-dark(var(--ukon-800), var(--ukon-300));
 

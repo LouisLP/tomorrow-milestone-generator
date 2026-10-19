@@ -1,9 +1,4 @@
-<!--
-  Button with Kabuki variants. No variant = neutral. `intent="danger"` keeps a neutral or
-  ghost button calm at rest and tints it on hover; on `primary` it is a solid danger button.
-  `kbd` shows a shortcut hint; it's hidden from assistive tech, so pass `aria-keyshortcuts`
-  to announce the shortcut.
--->
+<!-- `kbd` is hidden from assistive tech: pair it with `aria-keyshortcuts`. -->
 <script setup lang="ts">
 import { nextTick, useTemplateRef, watch } from 'vue'
 import UniKbd from './UniKbd.vue'
@@ -27,8 +22,7 @@ defineSlots<{
   icon?: () => unknown
 }>()
 
-// Going disabled while loading drops focus to <body>; hand it back when loading ends,
-// so a keyboard user can retry a failed action without hunting for the button.
+// Disabling while loading drops focus to <body>; hand it back afterwards
 const button = useTemplateRef('button')
 let hadFocus = false
 watch(() => props.loading, async (loading) => {
@@ -97,7 +91,7 @@ watch(() => props.loading, async (loading) => {
   cursor: not-allowed;
 }
 
-/* A loading button is busy, not unavailable: keep it at full strength */
+/* Busy, not unavailable */
 .button[aria-busy='true'] {
   opacity: 1;
   cursor: progress;
@@ -121,7 +115,7 @@ watch(() => props.loading, async (loading) => {
 .button[data-variant='secondary'] {
   border-color: transparent;
   background: var(--color-secondary-default);
-  color: var(--color-text-on-accent);
+  color: var(--color-text-on-secondary);
 }
 
 .button[data-variant='secondary']:hover:not(:disabled) {
@@ -151,7 +145,7 @@ watch(() => props.loading, async (loading) => {
 }
 
 .button[data-variant='primary'][data-intent='danger']:hover:not(:disabled) {
-  background: oklch(from var(--color-danger-default) calc(l + 0.06) c h);
+  background: var(--color-danger-hover);
 }
 
 .icon {
@@ -164,7 +158,6 @@ watch(() => props.loading, async (loading) => {
   block-size: 0.875em;
 }
 
-/* Follow the button's ink so the hint reads on every variant */
 .button .kbd {
   margin-inline-start: var(--space-2xs);
   border-color: oklch(from currentcolor l c h / 0.4);

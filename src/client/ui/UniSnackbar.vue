@@ -1,12 +1,4 @@
-<!--
-  One transient message at a time (role="status"), e.g. "Accepted '…'" with Undo. Setting a
-  new notice replaces the current one and restarts the timer; give each notice a fresh `id`
-  so repeating the same message still counts as new. The timer pauses while the pointer or
-  focus is on the snackbar. The live region stays mounted so every message is announced.
--->
-<script lang="ts">
-</script>
-
+<!-- Give each notice a fresh `id`, so a repeated message still restarts the timer. -->
 <script setup lang="ts">
 import { onUnmounted, ref, watch } from 'vue'
 import UniButton from './UniButton.vue'
@@ -41,7 +33,7 @@ function start() {
 
 function dismiss() {
   clear()
-  // The element goes away, so no pointerleave/focusout will come to unpause it
+  // The element goes away, so no pointerleave/focusout will unpause it
   paused.value = false
   notice.value = undefined
 }

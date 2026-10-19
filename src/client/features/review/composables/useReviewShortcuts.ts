@@ -1,5 +1,4 @@
-// Review queue shortcuts (#6): A / R / S / E act on the current draft, Cmd/Ctrl+Z undoes.
-// None of them fire while the user types or while a dialog is open.
+// A / R / S / E act on the current draft, Cmd/Ctrl+Z undoes; none fire while typing or in a dialog
 import { onScopeDispose } from 'vue'
 
 export interface ReviewShortcutHandlers {
@@ -10,7 +9,6 @@ export interface ReviewShortcutHandlers {
   undo: () => void
 }
 
-/** True on Apple platforms, where undo is ⌘Z rather than Ctrl+Z. */
 export const isApplePlatform = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.userAgent)
 
 const TYPING_TARGET = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])'
@@ -49,7 +47,7 @@ export function useReviewShortcuts(handlers: ReviewShortcutHandlers) {
     const action = KEYS[key]
     if (!action)
       return
-    // Keeps the E press from typing into the field it opens
+    // Keeps E from typing into the field it opens
     event.preventDefault()
     handlers[action]()
   }

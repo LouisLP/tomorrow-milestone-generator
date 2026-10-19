@@ -10,20 +10,20 @@ export default {
       updated: 'Aggiornata {time}',
       empty: {
         title: 'Ancora nessuna sfida',
-        body: 'Scrivi un titolo e un brief: l\'AI propone le milestone e tu le rivedi.',
+        body: 'Scrivi un titolo e un brief: l\'IA propone le milestone e tu le rivedi.',
       },
     },
     new: {
       title: 'Nuova sfida',
-      detailsLabel: 'Dettagli della challenge',
+      detailsLabel: 'Dettagli della sfida',
       editDetails: 'Modifica dettagli',
     },
     form: {
-      title: 'Titolo della challenge',
+      title: 'Titolo della sfida',
       brief: 'Brief',
-      briefHint: 'Cosa devono imparare o costruire i partecipanti? L\'AI propone le milestone nella lingua del brief.',
+      briefHint: 'Cosa devono imparare o costruire i partecipanti? L\'IA propone le milestone nella lingua del brief.',
       generate: 'Genera milestone',
-      generating: 'Bozze di milestone in corso…',
+      generating: 'Preparazione delle milestone…',
     },
     detail: {
       title: 'Sfida',

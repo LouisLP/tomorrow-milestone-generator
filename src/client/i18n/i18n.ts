@@ -3,6 +3,9 @@ import { createI18n } from 'vue-i18n'
 import challengesDe from '../features/challenges/locales/de'
 import challengesEn from '../features/challenges/locales/en'
 import challengesIt from '../features/challenges/locales/it'
+import navbarDe from '../features/navbar/locales/de'
+import navbarEn from '../features/navbar/locales/en'
+import navbarIt from '../features/navbar/locales/it'
 import reviewDe from '../features/review/locales/de'
 import reviewEn from '../features/review/locales/en'
 import reviewIt from '../features/review/locales/it'
@@ -10,7 +13,7 @@ import commonDe from './locales/common/de'
 import commonEn from './locales/common/en'
 import commonIt from './locales/common/it'
 
-/** Supported locales with their native names (shown as-is in every UI language). */
+/** Native names, shown as-is in every UI language. */
 export const LOCALES = {
   en: 'English',
   de: 'Deutsch',
@@ -21,14 +24,14 @@ export type Locale = keyof typeof LOCALES
 
 const STORAGE_KEY = 'locale'
 
-const en = { ...commonEn, ...challengesEn, ...reviewEn }
+const en = { ...commonEn, ...navbarEn, ...challengesEn, ...reviewEn }
 
 export type MessageSchema = typeof en
 
 const messages: Record<Locale, MessageSchema> = {
   en,
-  de: { ...commonDe, ...challengesDe, ...reviewDe },
-  it: { ...commonIt, ...challengesIt, ...reviewIt },
+  de: { ...commonDe, ...navbarDe, ...challengesDe, ...reviewDe },
+  it: { ...commonIt, ...navbarIt, ...challengesIt, ...reviewIt },
 }
 
 const dateFormats = {
@@ -55,7 +58,7 @@ function saveLocale(locale: Locale) {
     localStorage.setItem(STORAGE_KEY, locale)
   }
   catch {
-    // Storage blocked: the choice just won't survive a reload.
+    // Storage blocked: the choice just won't survive a reload
   }
 }
 
@@ -69,12 +72,11 @@ export const i18n = createI18n<[MessageSchema], Locale, false>({
   fallbackWarn: import.meta.env.DEV,
 })
 
-/** Switches the UI language live. */
 export function setLocale(locale: Locale) {
   i18n.global.locale.value = locale
 }
 
-// Every locale change, however it happens, is persisted and reflected in <html lang>.
+// However the locale changes, persist it and keep <html lang> in sync
 watch(i18n.global.locale, (locale) => {
   document.documentElement.lang = locale
   saveLocale(locale)

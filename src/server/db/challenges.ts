@@ -14,8 +14,7 @@ import { and, asc, count, desc, eq, max } from 'drizzle-orm'
 import { ApiError } from '../http'
 import { challenges, milestones } from './schema'
 
-// Queries for Challenges and their Milestones. Rule violations throw `ApiError`, which also
-// rolls back the surrounding transaction, so nothing is written.
+// Rule violations throw `ApiError`, which also rolls back the transaction
 
 type Tx = Parameters<Parameters<Db['transaction']>[0]>[0]
 

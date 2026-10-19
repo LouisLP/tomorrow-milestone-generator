@@ -1,13 +1,9 @@
 import type { ErrorCode } from '../../../api'
 
-// Source catalogue: de.ts and it.ts must match this shape.
 export default {
   app: {
     name: 'Milestone Generator',
     skipToContent: 'Skip to main content',
-  },
-  language: {
-    label: 'Language',
   },
   actions: {
     cancel: 'Cancel',
@@ -21,7 +17,7 @@ export default {
     close: 'Close',
     backToList: 'Back to challenges',
   },
-  // `aborted` is never shown: the user cancelled on purpose.
+  // No `aborted`: a cancel is never shown
   errors: {
     validation_failed: 'Some fields need fixing.',
     not_found: 'This challenge no longer exists.',

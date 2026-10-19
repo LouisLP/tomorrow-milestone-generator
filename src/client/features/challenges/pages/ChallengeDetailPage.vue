@@ -1,8 +1,3 @@
-<!--
-  Challenge detail (#4, #7): the saved Challenge, editable inline, and below its Milestones
-  the append flow (#19): Generate more milestones → review queue → Save appends at the end.
-  Generation uses the Challenge's saved title and Brief.
--->
 <script setup lang="ts">
 import type { Milestone, MilestoneContent } from '@shared'
 import { LIMITS, MILESTONE_CAP } from '@shared'
@@ -19,12 +14,15 @@ import UniConfirmDialog from '../../../ui/UniConfirmDialog.vue'
 import UniInlineAlert from '../../../ui/UniInlineAlert.vue'
 import UniInlineEditable from '../../../ui/UniInlineEditable.vue'
 import UniSpinner from '../../../ui/UniSpinner.vue'
-import DraftingDialogs from '../../review/DraftingDialogs.vue'
-import ReviewQueue from '../../review/ReviewQueue.vue'
-import { useDraftingFlow } from '../../review/useDraftingFlow'
+import { focusPageHeadingIfParked } from '../../../utils/focus.utils'
+import DraftingDialogs from '../../review/components/DraftingDialogs.vue'
+import ReviewQueue from '../../review/components/ReviewQueue.vue'
+import { useDraftingFlow } from '../../review/composables/useDraftingFlow'
 import SavedMilestoneItem from '../components/SavedMilestoneItem.vue'
-import { failureMessage } from '../failureMessage'
-import { createSavedChallenge, milestoneFieldKey } from '../useSavedChallenge'
+import { createSavedChallenge } from '../composables/useSavedChallenge'
+import { parseChallengeId } from '../utils/challengeId.utils'
+import { failureMessage } from '../utils/fieldFailure.utils'
+import { milestoneFieldKey } from '../utils/fieldKey.utils'
 
 const props = defineProps<{ id: string }>()
 
@@ -34,17 +32,19 @@ const router = useRouter()
 const saved = createSavedChallenge()
 const { challenge, loadError, loading, fieldFailures, canDeleteMilestone } = saved
 
-/** Route ids are positive integers; anything else can't exist. */
-function parseId(value: string) {
-  const id = Number(value)
-  return /^\d+$/.test(value) && Number.isSafeInteger(id) && id > 0 ? id : null
-}
+watch(() => props.id, id => saved.load(parseChallengeId(id)), { immediate: true })
 
-watch(() => props.id, id => saved.load(parseId(id)), { immediate: true })
+// The h1 only renders once loaded
+watch(loading, async (isLoading) => {
+  if (isLoading)
+    return
+  await nextTick()
+  focusPageHeadingIfParked()
+})
 
 const milestonesHeading = useTemplateRef('milestonesHeading')
 
-// Append: generate from the saved title and Brief, with the saved Milestones as context
+// Append generates from the saved title and Brief
 const details = computed(() => ({ title: challenge.value?.title ?? '', brief: challenge.value?.brief ?? '' }))
 const savedMilestones = computed(() => challenge.value?.milestones ?? [])
 const flow = useDraftingFlow({ details, savedMilestones })
@@ -64,12 +64,11 @@ async function onSave(accepted: MilestoneContent[]) {
   const result = await flow.save(() => saved.appendMilestones(accepted))
   if (!result?.ok)
     return
-  // The review queue is gone with its drafts; land on the list that now holds them
+  // The review queue is gone; land on the list that now holds the drafts
   await nextTick()
   milestonesHeading.value?.focus()
 }
 
-// Delete Milestone
 const milestoneToDelete = ref<Milestone | null>(null)
 const deleteMilestoneOpen = computed({
   get: () => milestoneToDelete.value !== null,
@@ -79,7 +78,7 @@ const deleteMilestoneOpen = computed({
   },
 })
 
-// The deleted Milestone's button is gone, so the dialog can't hand focus back to it
+// The deleted Milestone's button is gone, so focus can't return to it
 let focusMilestonesOnClose = false
 
 async function confirmDeleteMilestone() {
@@ -100,7 +99,6 @@ function onDeleteMilestoneClosed(event: Event) {
   milestonesHeading.value?.focus()
 }
 
-// Delete Challenge
 const deleteChallengeOpen = ref(false)
 
 async function confirmDeleteChallenge() {
@@ -270,7 +268,7 @@ async function confirmDeleteChallenge() {
   margin-inline: auto;
 }
 
-/* The review queue needs room for its side rail */
+/* Room for the review queue's side rail */
 .page.wide {
   max-inline-size: 72rem;
 }
@@ -319,7 +317,6 @@ async function confirmDeleteChallenge() {
 
 .challenge-title :deep(h1) {
   font-size: var(--font-size-3xl);
-  overflow-wrap: anywhere;
 }
 
 .section {
@@ -347,10 +344,6 @@ async function confirmDeleteChallenge() {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   letter-spacing: normal;
-}
-
-.brief :deep(p) {
-  overflow-wrap: anywhere;
 }
 
 .hint {

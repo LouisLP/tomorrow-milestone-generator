@@ -1,4 +1,4 @@
-// Review queue copy (#6, #7). Plurals: `zero | one | many` or `one | many`, count in {n}.
+// Plurals: `zero | one | many` or `one | many`, count in {n}
 export default {
   review: {
     heading: 'Review draft milestones',
@@ -66,7 +66,7 @@ export default {
       confirmLabel: 'Discard and leave',
     },
     save: {
-      label: 'Save no milestones | Save {n} milestone | Save {n} milestones',
+      label: 'No milestones to save | Save {n} milestone | Save {n} milestones',
       undecided: '{n} still undecided',
       overCap: 'A challenge can have at most {cap} milestones. Remove the accepted drafts. | A challenge can have at most {cap} milestones. Accept no more than {n}. | A challenge can have at most {cap} milestones. Accept no more than {n}.',
       confirmTitle: 'Save with {n} undecided draft? | Save with {n} undecided drafts?',

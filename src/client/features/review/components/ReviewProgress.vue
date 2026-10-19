@@ -1,15 +1,10 @@
-<!--
-  Breadcrumbs: one segment per AI draft, coloured by its state. Clicking a segment makes that
-  draft current (taking back its decision or skip mark). Below: how many are reviewed, a
-  legend, and Accept remaining.
--->
 <script setup lang="ts">
-import type { DraftReview } from './useDraftReview'
+import type { DraftReview } from '../composables/useDraftReview'
 import { GENERATED_MIN } from '@shared'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import IconCheckCheck from '~icons/lucide/check-check'
-import UniButton from '../../ui/UniButton.vue'
+import UniButton from '../../../ui/UniButton.vue'
 
 const props = defineProps<{ review: DraftReview }>()
 
@@ -40,7 +35,7 @@ const segments = computed<Segment[]>(() => {
   }))
   if (!generating.value)
     return real
-  // Everything but accepted drafts is about to be replaced by the new batch
+  // All but accepted drafts are about to be replaced
   const placeholders = Array.from({ length: GENERATED_MIN }, (_, i): Segment => ({ key: `generating-${i}`, state: 'generating' }))
   return [...real.filter(segment => segment.state === 'accepted'), ...placeholders]
 })
@@ -116,7 +111,7 @@ const currentKey = computed(() => props.review.current.value?.key)
   flex: 1;
 }
 
-/* Fixed-size hit area; the visible bar is ::before, so rings never shift the layout */
+/* Fixed hit area; the bar is ::before so rings never shift layout */
 .segment {
   --bar: 6px;
   --hit: 1.25rem;
@@ -184,7 +179,6 @@ const currentKey = computed(() => props.review.current.value?.key)
     0 0 0 3px var(--color-text-secondary);
 }
 
-/* The ring goes on the bar, not the tall hit area */
 .segment:focus-visible {
   outline: none;
 }

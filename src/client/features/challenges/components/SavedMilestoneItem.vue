@@ -1,11 +1,6 @@
-<!--
-  One saved Milestone on the detail page: title and description edit inline, the delete
-  button asks the page to confirm. `canDelete` false (the last Milestone) disables delete
-  and shows why.
--->
 <script setup lang="ts">
 import type { Milestone } from '@shared'
-import type { MilestoneField } from '../useSavedChallenge'
+import type { MilestoneField } from '../types/challenge.types'
 import { LIMITS } from '@shared'
 import { useId } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -15,7 +10,7 @@ import UniInlineEditable from '../../../ui/UniInlineEditable.vue'
 
 defineProps<{
   milestone: Milestone
-  /** 1-based number shown to the user */
+  /** 1-based */
   n: number
   canDelete: boolean
   titleError?: string
@@ -108,12 +103,10 @@ const noteId = useId()
 
 .title :deep(h3) {
   font-size: var(--font-size-lg);
-  overflow-wrap: anywhere;
 }
 
-.description :deep(p) {
+.description {
   color: var(--color-text-secondary);
-  overflow-wrap: anywhere;
 }
 
 .note {
@@ -121,7 +114,6 @@ const noteId = useId()
   font-size: var(--font-size-sm);
 }
 
-/* Narrow screens: the delete button drops under the text */
 @media (width < 30rem) {
   .milestone {
     grid-template-columns: auto 1fr;

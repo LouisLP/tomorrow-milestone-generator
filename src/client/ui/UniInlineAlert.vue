@@ -1,7 +1,4 @@
-<!--
-  Inline error or warning announced on insertion (role="alert"), e.g. a failed Generate or
-  Save. Render it with v-if so it's announced each time it appears.
--->
+<!-- Render with v-if: role="alert" announces it on insertion. -->
 <script setup lang="ts">
 import IconCircleAlert from '~icons/lucide/circle-alert'
 import IconTriangleAlert from '~icons/lucide/triangle-alert'

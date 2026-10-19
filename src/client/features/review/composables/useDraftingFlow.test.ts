@@ -1,11 +1,11 @@
 import type { ChallengeDetail, GenerateResponse } from '@shared'
-import type { ApiResult } from '../../api'
+import type { ApiResult } from '../../../api'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { nextTick, ref } from 'vue'
-import { generateMilestones } from '../../api'
+import { generateMilestones } from '../api/generate.api'
 import { createDraftingFlow } from './useDraftingFlow'
 
-vi.mock('../../api', () => ({ generateMilestones: vi.fn() }))
+vi.mock('../api/generate.api', () => ({ generateMilestones: vi.fn() }))
 
 const generate = vi.mocked(generateMilestones)
 
