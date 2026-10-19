@@ -1,0 +1,17 @@
+minimumReleaseAgeExcludePrune: true
+
+trustPolicy: no-downgrade
+trustPolicyExclude:
+  # Legit 2023 release that predates npm provenance; pulled in by vite-plugin-vue-devtools via @babel/core.
+  - semver@6.3.1
+
+shellEmulator: true
+
+allowBuilds:
+  better-sqlite3: true
+  esbuild: true
+
+updateConfig:
+  ignoreDependencies:
+    # vue-tsc (type-check) needs the TS 6 JS compiler API; TS 7 is native-only.
+    - typescript
