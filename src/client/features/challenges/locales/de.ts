@@ -40,6 +40,9 @@ export default {
         title: 'Diesen Meilenstein löschen?',
         description: '„{title}“ wird aus der Challenge entfernt. Das lässt sich nicht rückgängig machen.',
       },
+      newMilestones: 'Neue Meilensteine',
+      generateMore: 'Weitere Meilensteine generieren',
+      capReached: 'Eine Challenge kann höchstens {cap} Meilensteine haben. Lösche einen, um weitere zu generieren.',
       deleteChallenge: 'Challenge löschen',
       deleteChallengeDialog: {
         title: 'Diese Challenge löschen?',

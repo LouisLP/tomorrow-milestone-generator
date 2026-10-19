@@ -38,6 +38,9 @@ export default {
         title: 'Delete this milestone?',
         description: '“{title}” will be removed from the challenge. This can\'t be undone.',
       },
+      newMilestones: 'New milestones',
+      generateMore: 'Generate more milestones',
+      capReached: 'A challenge can have at most {cap} milestones. Delete one to generate more.',
       deleteChallenge: 'Delete challenge',
       deleteChallengeDialog: {
         title: 'Delete this challenge?',

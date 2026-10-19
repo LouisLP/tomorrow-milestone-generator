@@ -171,3 +171,29 @@ describe('deletes', () => {
     expect(await saved.deleteChallenge()).toBe('internal')
   })
 })
+
+describe('append', () => {
+  const drafts = [{ title: 'M3', description: 'M3 description' }]
+
+  it('sends the accepted drafts and shows the returned Challenge', async () => {
+    const saved = await loaded()
+    const appended = detail([milestone(1, 0), milestone(2, 1), milestone(3, 2)])
+    vi.mocked(api.appendMilestones).mockResolvedValue({ ok: true, data: appended })
+
+    const result = await saved.appendMilestones(drafts)
+
+    expect(api.appendMilestones).toHaveBeenCalledWith(7, { milestones: drafts })
+    expect(result.ok).toBe(true)
+    expect(saved.challenge.value?.milestones.map(m => m.id)).toEqual([1, 2, 3])
+  })
+
+  it('keeps the Milestones and returns the failure', async () => {
+    const saved = await loaded()
+    vi.mocked(api.appendMilestones).mockResolvedValue({ ok: false, error: { code: 'milestone_cap_exceeded' } })
+
+    const result = await saved.appendMilestones(drafts)
+
+    expect(result).toEqual({ ok: false, error: { code: 'milestone_cap_exceeded' } })
+    expect(saved.challenge.value?.milestones).toHaveLength(2)
+  })
+})
