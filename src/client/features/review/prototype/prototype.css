@@ -1,0 +1,83 @@
+/* PROTOTYPE (#6): shared button/field styles so variants differ in structure, not chrome. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: var(--space-2xs) var(--space-sm);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface-raised);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-out);
+  white-space: nowrap;
+}
+.btn:hover:not(:disabled) { background: var(--color-bg-surface-hover); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn--primary { background: var(--color-accent-default); border-color: transparent; color: var(--color-text-on-accent); }
+.btn--primary:hover:not(:disabled) { background: var(--color-accent-hover); }
+.btn--secondary { background: var(--color-secondary-default); border-color: transparent; color: var(--color-text-on-accent); }
+.btn--secondary:hover:not(:disabled) { background: var(--color-secondary-hover); }
+.btn--ghost { background: transparent; border-color: transparent; color: var(--color-text-secondary); }
+.btn--ghost:hover:not(:disabled) { background: var(--color-bg-surface-hover); color: var(--color-text-primary); }
+.btn--lg { padding: var(--space-xs) var(--space-md); font-size: var(--font-size-md); }
+.btn svg { flex-shrink: 0; }
+
+.field { display: grid; gap: var(--space-2xs); }
+.field label { font-size: var(--font-size-sm); color: var(--color-text-secondary); font-weight: var(--font-weight-medium); }
+.input {
+  width: 100%;
+  padding: var(--space-xs) var(--space-sm);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-canvas);
+  color: var(--color-text-primary);
+  font: inherit;
+}
+textarea.input { resize: vertical; min-height: 5lh; }
+
+.kbd {
+  display: inline-block;
+  min-width: 1.5em;
+  padding: 0 0.35em;
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-code);
+  font-size: var(--font-size-xs);
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.skeleton {
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, var(--color-bg-surface-raised) 0%, var(--color-bg-surface-hover) 50%, var(--color-bg-surface-raised) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s linear infinite;
+}
+@keyframes shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+
+.dialog-overlay { position: fixed; inset: 0; background: oklch(0% 0 0 / 0.55); z-index: var(--z-overlay); }
+.dialog-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  z-index: var(--z-modal);
+  width: min(30rem, calc(100vw - 2rem));
+  padding: var(--space-lg);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface);
+  box-shadow: var(--shadow-lg);
+  display: grid;
+  gap: var(--space-md);
+}
+.dialog-content h2 { font-size: var(--font-size-xl); }
+.dialog-content p { color: var(--color-text-secondary); }
+.dialog-actions { display: flex; justify-content: flex-end; gap: var(--space-xs); flex-wrap: wrap; }
+
+:where(ol, ul) { list-style: none; padding: 0; margin: 0; }
