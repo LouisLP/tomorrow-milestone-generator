@@ -3,12 +3,14 @@
   One undecided draft at a time in a big focus card with keyboard shortcuts (A / R / E / S,
   Cmd/Ctrl+Z). Every decision is undoable from a snackbar. Only two fields, so editing is
   inline (Reka Editable): click the text, or press E. Accepted drafts in the side rail expand
-  to edit in place. Save is the natural end of the queue.
+  to edit in place. Writing your own goes through a dialog (cancel = nothing added) and is
+  auto-accepted. Queue-wide actions (accept remaining, save) live outside the card.
 -->
 <script setup lang="ts">
-import { CollapsibleContent, CollapsibleRoot, CollapsibleTrigger, EditableArea, EditableInput, EditablePreview, EditableRoot, ProgressIndicator, ProgressRoot } from 'reka-ui'
+import { CollapsibleContent, CollapsibleRoot, CollapsibleTrigger, DialogClose, DialogContent, DialogOverlay, DialogPortal, DialogRoot, DialogTitle, EditableArea, EditableInput, EditablePreview, EditableRoot, ProgressIndicator, ProgressRoot } from 'reka-ui'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import IconCheck from '~icons/lucide/check'
+import IconCheckCheck from '~icons/lucide/check-check'
 import IconChevron from '~icons/lucide/chevron-down'
 import IconChevronUp from '~icons/lucide/chevron-up'
 import IconPencil from '~icons/lucide/pencil'
@@ -69,22 +71,38 @@ function moveBack(d: Draft) {
 // inline editing: E opens the focus card's title; rail items expand to edit in place
 const focusTitle = ref<InstanceType<typeof EditableRoot>>()
 const expandedKey = ref<string>()
-const freshKey = ref<string>()
 function startEdit() {
   focusTitle.value?.edit()
 }
 function toggleExpanded(d: Draft) {
   expandedKey.value = expandedKey.value === d.key ? undefined : d.key
 }
-function addOwn() {
-  const key = addStaffDraft()
-  freshKey.value = key
-  expandedKey.value = key
+// writing your own: a dialog, so cancel/Esc adds nothing; submitting auto-accepts it
+const addOpen = ref(false)
+const addForm = ref({ title: '', description: '' })
+const canAdd = computed(() => !!addForm.value.title.trim() && !!addForm.value.description.trim())
+function openAdd() {
+  addForm.value = { title: '', description: '' }
+  addOpen.value = true
+}
+function submitAdd() {
+  if (!canAdd.value)
+    return
+  addStaffDraft(addForm.value.title.trim(), addForm.value.description.trim())
+  flash(`Added “${addForm.value.title.trim()}”`)
+  addOpen.value = false
+}
+
+function onSaveClick() {
+  if (queue.value.length)
+    confirmEarlySave.value = true
+  else
+    save()
 }
 
 function onKey(e: KeyboardEvent) {
   const t = e.target as HTMLElement | null
-  if (t?.closest('input, textarea, [contenteditable], [role="alertdialog"]'))
+  if (addOpen.value || t?.closest('input, textarea, [contenteditable], [role="dialog"], [role="alertdialog"]'))
     return
   if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
     e.preventDefault()
@@ -121,9 +139,14 @@ const confirmEarlySave = ref(false)
       <ProgressRoot :model-value="reviewed" :max="Math.max(reviewable, 1)" class="progress" :aria-label="`${reviewed} of ${reviewable} reviewed`">
         <ProgressIndicator class="progress-bar" :style="{ width: `${(reviewed / Math.max(reviewable, 1)) * 100}%` }" />
       </ProgressRoot>
-      <p class="progress-label">
-        {{ status === 'generating' ? 'Drafting…' : `${reviewed} of ${reviewable} reviewed` }}
-      </p>
+      <div class="queue-bar">
+        <p class="progress-label">
+          {{ status === 'generating' ? 'Drafting…' : `${reviewed} of ${reviewable} reviewed` }}
+        </p>
+        <button v-if="queue.length > 1" class="btn btn--ghost" @click="acceptAllUndecided">
+          <IconCheckCheck /> Accept remaining {{ queue.length }}
+        </button>
+      </div>
 
       <article v-if="status === 'generating' && !current" class="focus" aria-busy="true">
         <p class="eyebrow">
@@ -175,14 +198,6 @@ const confirmEarlySave = ref(false)
             <IconCheck /> Accept <span class="kbd">A</span>
           </button>
         </div>
-        <div class="queue-tools">
-          <button class="btn btn--ghost" @click="acceptAllUndecided">
-            Accept remaining {{ queue.length }}
-          </button>
-          <button class="btn btn--ghost" :disabled="!canSave" @click="confirmEarlySave = true">
-            Save now…
-          </button>
-        </div>
       </article>
 
       <article v-else class="focus done">
@@ -216,7 +231,6 @@ const confirmEarlySave = ref(false)
               class="mini-title-edit"
               :model-value="d.title"
               submit-mode="both"
-              :start-with-edit-mode="d.key === freshKey"
               select-on-focus
               @submit="v => edit(d.key, { title: v ?? '' })"
             >
@@ -258,7 +272,7 @@ const confirmEarlySave = ref(false)
           Nothing yet
         </li>
       </ol>
-      <button class="btn btn--ghost" :disabled="status === 'generating'" @click="addOwn">
+      <button class="btn btn--ghost" :disabled="status === 'generating'" @click="openAdd">
         <IconPlus /> Add your own
       </button>
 
@@ -277,6 +291,15 @@ const confirmEarlySave = ref(false)
           </ol>
         </CollapsibleContent>
       </CollapsibleRoot>
+
+      <div class="rail-save">
+        <button class="btn btn--primary btn--lg" :disabled="!canSave" @click="onSaveClick">
+          Save {{ counts.accepted }} {{ counts.accepted === 1 ? 'milestone' : 'milestones' }}
+        </button>
+        <p v-if="queue.length" class="rail-note">
+          {{ queue.length }} still undecided
+        </p>
+      </div>
     </aside>
 
     <div v-if="snack" :key="snack.id" class="snack" role="status">
@@ -286,6 +309,33 @@ const confirmEarlySave = ref(false)
       </button>
     </div>
   </section>
+
+  <DialogRoot v-model:open="addOpen">
+    <DialogPortal>
+      <DialogOverlay class="dialog-overlay" />
+      <DialogContent class="dialog-content">
+        <DialogTitle>Write your own milestone</DialogTitle>
+        <form class="add-form" @submit.prevent="submitAdd">
+          <div class="field">
+            <label for="b-add-title">Title</label>
+            <input id="b-add-title" v-model="addForm.title" class="input" maxlength="120" autofocus>
+          </div>
+          <div class="field">
+            <label for="b-add-desc">Description</label>
+            <textarea id="b-add-desc" v-model="addForm.description" class="input" maxlength="1000" />
+          </div>
+          <div class="dialog-actions">
+            <DialogClose class="btn">
+              Cancel
+            </DialogClose>
+            <button class="btn btn--secondary" type="submit" :disabled="!canAdd">
+              <IconCheck /> Add as accepted
+            </button>
+          </div>
+        </form>
+      </DialogContent>
+    </DialogPortal>
+  </DialogRoot>
 
   <ConfirmDialog
     v-model:open="confirmEarlySave"
@@ -321,7 +371,10 @@ const confirmEarlySave = ref(false)
 .focus-desc { font-size: var(--font-size-lg); color: var(--color-text-secondary); line-height: var(--line-height-relaxed); max-width: 60ch; }
 .decide { display: flex; gap: var(--space-xs); flex-wrap: wrap; margin-top: auto; }
 .decide .btn--secondary { margin-inline-start: auto; }
-.queue-tools { display: flex; gap: var(--space-xs); border-top: var(--border-width-thin) solid var(--color-border-subtle); padding-top: var(--space-sm); }
+.queue-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-xs); min-height: 2rem; }
+.rail-save { display: grid; gap: var(--space-2xs); margin-top: var(--space-md); padding-top: var(--space-md); border-top: var(--border-width-thin) solid var(--color-border-subtle); }
+.rail-note { font-size: var(--font-size-xs); color: var(--color-text-muted); text-align: center; }
+.add-form { display: grid; gap: var(--space-md); }
 .done { place-content: center; text-align: center; }
 .done .decide { justify-content: center; }
 .badge {
