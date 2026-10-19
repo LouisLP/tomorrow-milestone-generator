@@ -6,6 +6,7 @@
  * can be rethemed by swapping references.
  *
  * Color source: joshiki-maku theatre curtain (sumi/kaki/seiji dye palette).
+ * beni and ukon are status hues added for danger/warning; not on the curtain.
  * `500` is the value sampled directly from the curtain photo for kaki and seiji.
  */
 
@@ -55,6 +56,29 @@
   --seiji-800: oklch(31% 0.064 165);
   --seiji-900: oklch(23% 0.045 165);
   --seiji-950: oklch(16% 0.03 165);
+
+  /* ------------------------------------------------------------------ */
+  /* Color — beni (safflower crimson; danger). Hue 18 stays clear of     */
+  /* kaki (36–50). Only the steps the semantic layer uses.              */
+  /* ------------------------------------------------------------------ */
+  --beni-50: oklch(97% 0.016 18);
+  --beni-300: oklch(76% 0.11 18);
+  --beni-500: oklch(60% 0.18 18);
+  --beni-600: oklch(52% 0.18 18);
+  --beni-700: oklch(44% 0.15 18);
+  --beni-800: oklch(36% 0.12 18);
+  --beni-950: oklch(20% 0.05 18);
+
+  /* ------------------------------------------------------------------ */
+  /* Color — ukon (turmeric yellow; warning). Hue 85 stays clear of      */
+  /* kaki (36–50) and seiji (165).                                      */
+  /* ------------------------------------------------------------------ */
+  --ukon-50: oklch(97% 0.03 85);
+  --ukon-300: oklch(85% 0.12 85);
+  --ukon-500: oklch(78% 0.15 85);
+  --ukon-600: oklch(68% 0.14 85);
+  --ukon-800: oklch(45% 0.09 85);
+  --ukon-950: oklch(22% 0.04 85);
 
   /* ------------------------------------------------------------------ */
   /* Typography                                                          */
