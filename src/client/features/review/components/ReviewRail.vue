@@ -1,11 +1,8 @@
-<!--
-  Side rail: Accepted drafts (expand a row to edit it in place), Add your own, Rejected
-  drafts, and Save. Every change is emitted; ReviewQueue applies it.
--->
 <script setup lang="ts">
 import type { MilestoneContent } from '@shared'
-import type { ErrorCode } from '../../api'
-import type { Draft, DraftReview } from './useDraftReview'
+import type { ErrorCode } from '../../../api'
+import type { DraftReview } from '../composables/useDraftReview'
+import type { Draft } from '../types/draft.types'
 import { MILESTONE_CAP } from '@shared'
 import { computed, nextTick, ref, useId, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -13,10 +10,10 @@ import IconChevronUp from '~icons/lucide/chevron-up'
 import IconPlus from '~icons/lucide/plus'
 import IconTrash from '~icons/lucide/trash-2'
 import IconUndo from '~icons/lucide/undo-2'
-import { errorMessage } from '../../i18n'
-import UniBadge from '../../ui/UniBadge.vue'
-import UniButton from '../../ui/UniButton.vue'
-import UniInlineAlert from '../../ui/UniInlineAlert.vue'
+import { errorMessage } from '../../../i18n'
+import UniBadge from '../../../ui/UniBadge.vue'
+import UniButton from '../../../ui/UniButton.vue'
+import UniInlineAlert from '../../../ui/UniInlineAlert.vue'
 import AddDraftDialog from './AddDraftDialog.vue'
 import DraftEditor from './DraftEditor.vue'
 
@@ -53,7 +50,7 @@ const acceptedList = useTemplateRef('acceptedList')
 async function toggle(draft: Draft) {
   const opening = expandedKey.value !== draft.key
   expandedKey.value = opening ? draft.key : null
-  // The toggle is swapped for another element, so hand focus to its counterpart
+  // The toggle is replaced by its counterpart, so move focus there
   await nextTick()
   acceptedList.value
     ?.querySelector<HTMLElement>(`[data-key="${draft.key}"] [data-role="toggle"]`)

@@ -1,7 +1,3 @@
-<!--
-  "Write your own milestone" (Reka Dialog). Both fields are required, checked with the shared
-  schema on submit and live after that. Cancel/Esc adds nothing.
--->
 <script setup lang="ts">
 import type { MilestoneContent } from '@shared'
 import { LIMITS, milestoneContent } from '@shared'
@@ -9,9 +5,9 @@ import { DialogClose, DialogContent, DialogDescription, DialogOverlay, DialogPor
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import IconCheck from '~icons/lucide/check'
-import { fieldErrors } from '../../i18n'
-import UniButton from '../../ui/UniButton.vue'
-import UniFormField from '../../ui/UniFormField.vue'
+import { fieldErrors } from '../../../i18n'
+import UniButton from '../../../ui/UniButton.vue'
+import UniFormField from '../../../ui/UniFormField.vue'
 
 const emit = defineEmits<{ add: [content: MilestoneContent] }>()
 

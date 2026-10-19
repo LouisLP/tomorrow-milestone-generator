@@ -1,22 +1,15 @@
-<!--
-  A Draft Milestone's title + description, both click-to-edit. Enter or blur submits the
-  title, blur submits the description, Esc cancels. An emptied field reverts with an error
-  instead of submitting. `size="lg"` is the focus card; the default is the side rail.
--->
 <script setup lang="ts">
 import type { MilestoneContent } from '@shared'
 import { LIMITS } from '@shared'
 import { nextTick, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
-import UniInlineEditable from '../../ui/UniInlineEditable.vue'
+import UniInlineEditable from '../../../ui/UniInlineEditable.vue'
 
 withDefaults(defineProps<{
   title: string
   description: string
   size?: 'md' | 'lg'
-  /** Element the title renders as, e.g. 'h3' on the focus card */
   titleAs?: string
-  /** Lets a parent point aria-labelledby at the title */
   titleId?: string
 }>(), {
   size: 'md',
@@ -31,7 +24,7 @@ const errors = ref<Partial<Record<keyof MilestoneContent, string>>>({})
 const titleField = useTemplateRef('titleField')
 
 async function submit(field: keyof MilestoneContent, value: string) {
-  // Clear first so the same error set again still makes the field revert
+  // Cleared first so a repeated error still makes the field revert
   errors.value[field] = undefined
   if (value.trim()) {
     emit('edit', { [field]: value })

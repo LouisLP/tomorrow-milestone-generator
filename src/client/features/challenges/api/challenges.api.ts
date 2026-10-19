@@ -1,12 +1,11 @@
 import type {
   AppendMilestonesRequest,
   CreateChallengeRequest,
-  GenerateRequest,
   UpdateChallengeRequest,
   UpdateMilestoneRequest,
 } from '@shared'
-import { challengeDetail, challengeSummary, generateResponse, milestone } from '@shared'
-import { request } from './request'
+import { challengeDetail, challengeSummary, milestone } from '@shared'
+import { request } from '../../../api'
 
 function challengePath(id: number) {
   return `/api/challenges/${id}`
@@ -16,7 +15,7 @@ function milestonePath(challengeId: number, milestoneId: number) {
   return `${challengePath(challengeId)}/milestones/${milestoneId}`
 }
 
-/** Challenges sorted by `updatedAt`, newest first. */
+/** Newest `updatedAt` first. */
 export function listChallenges() {
   return request('/api/challenges', { schema: challengeSummary.array() })
 }
@@ -47,9 +46,4 @@ export function updateMilestone(challengeId: number, milestoneId: number, body: 
 
 export function deleteMilestone(challengeId: number, milestoneId: number) {
   return request(milestonePath(challengeId, milestoneId), { method: 'DELETE' })
-}
-
-/** Asks the AI for Draft Milestones. Abort `signal` to cancel (the result is then `aborted`). */
-export function generateMilestones(body: GenerateRequest, signal?: AbortSignal) {
-  return request('/api/generate', { method: 'POST', body, schema: generateResponse, signal })
 }

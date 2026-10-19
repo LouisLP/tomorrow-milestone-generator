@@ -1,30 +1,24 @@
-<!--
-  The review queue (#6 variant B, "Triage queue") on top of a `createDraftReview` instance:
-  progress breadcrumbs + focus card in the main column, Accepted / Rejected / Save in the
-  side rail (stacked on narrow screens). Owns the shortcuts, the undo snackbar, the
-  "Save with N undecided?" confirm and focus moves. The page owns generate and save calls.
--->
 <script setup lang="ts">
 import type { MilestoneContent } from '@shared'
-import type { ErrorCode } from '../../api'
-import type { SnackbarNotice } from '../../ui/UniSnackbar.vue'
-import type { DraftReview, ReviewAction } from './useDraftReview'
+import type { ErrorCode } from '../../../api'
+import type { SnackbarNotice } from '../../../ui/UniSnackbar.vue'
+import type { DraftReview } from '../composables/useDraftReview'
+import type { ReviewAction } from '../types/draft.types'
 import { computed, ref, useId, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { errorMessage } from '../../i18n'
-import UniConfirmDialog from '../../ui/UniConfirmDialog.vue'
-import UniInlineAlert from '../../ui/UniInlineAlert.vue'
-import UniSnackbar from '../../ui/UniSnackbar.vue'
+import { errorMessage } from '../../../i18n'
+import UniConfirmDialog from '../../../ui/UniConfirmDialog.vue'
+import UniInlineAlert from '../../../ui/UniInlineAlert.vue'
+import UniSnackbar from '../../../ui/UniSnackbar.vue'
+import { isApplePlatform, useReviewShortcuts } from '../composables/useReviewShortcuts'
 import ReviewFocusCard from './ReviewFocusCard.vue'
 import ReviewProgress from './ReviewProgress.vue'
 import ReviewRail from './ReviewRail.vue'
-import { isApplePlatform, useReviewShortcuts } from './useReviewShortcuts'
 
 const props = withDefaults(defineProps<{
   review: DraftReview
   saving?: boolean
   saveError?: ErrorCode | null
-  /** Milestones the Challenge already has, for the cap message */
   savedCount?: number
 }>(), {
   saving: false,
@@ -45,7 +39,7 @@ const status = computed(() => props.review.status.value)
 const generating = computed(() => status.value === 'generating')
 const hasAiDrafts = computed(() => props.review.drafts.value.some(draft => draft.origin === 'ai'))
 
-// Field errors belong to the form, and a cancelled request isn't an error
+// Field errors belong to the form; a cancel isn't an error
 const generateError = computed(() => {
   const code = props.review.error.value
   return code && code !== 'validation_failed' && code !== 'aborted' ? code : null
@@ -54,8 +48,6 @@ const generateError = computed(() => {
 const saveDisabled = computed(() =>
   generating.value || props.review.counts.value.accepted === 0 || props.review.overCap.value,
 )
-
-// Snackbar
 
 const notice = ref<SnackbarNotice>()
 let noticeId = 0
@@ -75,11 +67,9 @@ function notify(message: string) {
   }
 }
 
-// Changes
-
 const focusCard = useTemplateRef('focusCard')
 
-/** Applies a change; if it was recorded (so it's undoable), says so in the snackbar. */
+/** Announces the change in the snackbar if it was recorded (so it's undoable). */
 function run(change: () => void, { moveFocus = false } = {}) {
   const before = props.review.lastAction.value
   change()
@@ -109,8 +99,6 @@ function undo() {
   notify(t('review.notice.undone'))
   focusCard.value?.focus()
 }
-
-// Save
 
 const confirmOpen = ref(false)
 

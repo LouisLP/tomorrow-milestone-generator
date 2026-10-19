@@ -1,26 +1,10 @@
-// State for the saved side of the detail page (#4, #7): load a Challenge, edit its fields
-// and Milestones inline, delete either, append accepted drafts. One instance per page.
 import type { ChallengeDetail, Issue, MilestoneContent } from '@shared'
-import type { ApiResult, ErrorCode } from '../../api'
+import type { ApiResult, ErrorCode } from '../../../api'
+import type { ChallengeField, FieldFailure, FieldKey, MilestoneField } from '../types/challenge.types'
 import { updateChallengeRequest, updateMilestoneRequest, zodIssues } from '@shared'
 import { computed, nextTick, ref, shallowRef } from 'vue'
-import * as api from '../../api'
-
-export type ChallengeField = 'title' | 'brief'
-export type MilestoneField = 'title' | 'description'
-
-/** Why a field's last save failed. Kept as data so the message follows a language switch. */
-export interface FieldFailure {
-  code: ErrorCode
-  /** The failed check, for `validation_failed` (client-side or from the server). */
-  issue?: Issue
-}
-
-export type FieldKey = ChallengeField | `milestone.${number}.${MilestoneField}`
-
-export function milestoneFieldKey(milestoneId: number, field: MilestoneField): FieldKey {
-  return `milestone.${milestoneId}.${field}`
-}
+import * as api from '../api/challenges.api'
+import { milestoneFieldKey } from '../utils/fieldKey.utils'
 
 function failure(code: ErrorCode, issues?: Issue[]): FieldFailure {
   return { code, ...(issues?.[0] && { issue: issues[0] }) }
@@ -35,7 +19,7 @@ export function createSavedChallenge() {
 
   const canDeleteMilestone = computed(() => (challenge.value?.milestones.length ?? 0) > 1)
 
-  /** Loads `id`; `null` (an id that can't exist) goes straight to `not_found`. */
+  /** `null` (an id that can't exist) is `not_found` without a request. */
   async function load(id: number | null) {
     currentId.value = id
     challenge.value = null
@@ -60,7 +44,7 @@ export function createSavedChallenge() {
     return load(currentId.value)
   }
 
-  /** Re-reads the Challenge after a change; on failure the local copy stays as it is. */
+  /** On failure the local copy stays. */
   async function refresh() {
     const id = currentId.value
     if (id === null)
@@ -70,10 +54,7 @@ export function createSavedChallenge() {
       challenge.value = result.data
   }
 
-  /**
-   * Clears the field's failure, then sets the new one on the next tick, so a repeated
-   * identical failure still reads as a change (the inline editor reverts on each change).
-   */
+  // Set on the next tick so a repeated identical failure still makes the inline editor revert
   async function setFailure(key: FieldKey, value: FieldFailure | undefined) {
     delete fieldFailures.value[key]
     if (!value)
@@ -126,7 +107,7 @@ export function createSavedChallenge() {
       milestones[index] = result.data
   }
 
-  /** Returns the failure code, or `null` once deleted (positions come back recompacted). */
+  /** The failure code, or `null` once deleted. */
   async function deleteMilestone(milestoneId: number): Promise<ErrorCode | null> {
     const current = challenge.value
     if (!current)
@@ -143,7 +124,6 @@ export function createSavedChallenge() {
     return null
   }
 
-  /** Adds accepted drafts at the end; on success the page shows the returned Challenge. */
   async function appendMilestones(milestones: MilestoneContent[]): Promise<ApiResult<ChallengeDetail>> {
     const current = challenge.value
     if (!current)
@@ -154,7 +134,7 @@ export function createSavedChallenge() {
     return result
   }
 
-  /** Returns the failure code, or `null` once gone (already gone counts as done). */
+  /** The failure code, or `null` once gone (already gone counts). */
   async function deleteChallenge(): Promise<ErrorCode | null> {
     const current = challenge.value
     if (!current)

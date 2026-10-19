@@ -21,10 +21,7 @@ export interface GeneratorOptions {
 
 const MAX_ATTEMPTS = 2
 
-/**
- * Wraps `attempt` with the policy from #7: one extra attempt on `generation_invalid` only,
- * and an overall deadline (or the caller's signal) that ends in `generation_unavailable`.
- */
+/** Retries `generation_invalid` once; the deadline or an abort ends in `generation_unavailable`. */
 export function createGenerator(attempt: Attempt, { deadlineMs = 90_000 }: GeneratorOptions = {}): Generator {
   return {
     async generate(input, requestSignal) {

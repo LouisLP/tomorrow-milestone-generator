@@ -2,7 +2,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 declare module 'vue-router' {
   interface RouteMeta {
-    /** i18n key of the page's document title; `App.vue` keeps it translated. */
     titleKey?: string
   }
 }

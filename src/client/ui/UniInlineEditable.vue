@@ -1,27 +1,22 @@
 <!--
-  Click-to-edit text (Reka Editable): focus or click the text to edit, Esc cancels.
-  `value` is the last saved value; the field shows the edited text while the parent saves
-  it. To report a failed save, set `error` (clear it before each save): the field reverts
-  to `value` and shows the error next to it.
+  Click-to-edit text. Enter saves (Shift+Enter is a newline when `multiline`), Esc cancels.
+  Set `error` after a failed save and the text reverts to `value`.
 -->
 <script setup lang="ts">
 import { EditableArea, EditableInput, EditablePreview, EditableRoot } from 'reka-ui'
-import { computed, ref, useId, useTemplateRef, watch } from 'vue'
+import { nextTick, ref, useId, useTemplateRef, watch } from 'vue'
 
 const props = withDefaults(defineProps<{
   value: string
   label: string
   maxlength?: number
-  placeholder?: string
   multiline?: boolean
-  submitMode?: 'blur' | 'enter' | 'both' | 'none'
-  /** Element the saved text renders as, e.g. 'h3' for a title */
+  /** Wraps both the text and the input, so they share its typography */
   as?: string
+  id?: string
   error?: string
   disabled?: boolean
 }>(), {
-  // Reka's own default placeholder is English
-  placeholder: '',
   as: 'span',
 })
 
@@ -30,9 +25,7 @@ const emit = defineEmits<{ submit: [value: string] }>()
 const draft = ref(props.value)
 const errorId = useId()
 const root = useTemplateRef('root')
-
-// A textarea needs Enter for newlines, so it submits on blur unless told otherwise
-const mode = computed(() => props.submitMode ?? (props.multiline ? 'blur' : 'both'))
+const editing = ref(false)
 
 watch(() => props.value, (saved) => {
   draft.value = saved
@@ -44,26 +37,43 @@ watch(() => props.error, (error) => {
 })
 
 function onSubmit(value: string | null | undefined) {
-  const next = value ?? ''
+  const next = props.multiline ? value ?? '' : (value ?? '').replace(/\s*\n\s*/g, ' ')
   if (next !== props.value)
     emit('submit', next)
 }
 
-// Reka misses focus moving straight into another Editable (each is its own dismissable
-// layer), e.g. tabbing from a title to its description, so handle leaving the input here.
-// Esc/Enter hide the input, which blurs it after Reka has already settled the edit
-const editing = ref(false)
+function textarea() {
+  return root.value?.$el.querySelector('textarea') as HTMLTextAreaElement | null | undefined
+}
 
+// Grows with its content, like the text it replaces
+function fit() {
+  const element = textarea()
+  if (!element)
+    return
+  element.style.blockSize = 'auto'
+  element.style.blockSize = `${element.scrollHeight + element.offsetHeight - element.clientHeight}px`
+}
+
+watch(editing, async (isEditing) => {
+  if (!isEditing)
+    return
+  await nextTick()
+  fit()
+})
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.key === 'Enter' && !event.isComposing && !(props.multiline && event.shiftKey))
+    event.preventDefault()
+}
+
+// Reka misses focus moving straight into another Editable (e.g. title → description)
 function onInputBlur(event: FocusEvent) {
   if (!editing.value)
     return
   const next = event.relatedTarget
-  if (next instanceof Node && root.value?.$el.contains(next))
-    return
-  if (mode.value === 'blur' || mode.value === 'both')
+  if (!(next instanceof Node && root.value?.$el.contains(next)))
     root.value?.submit()
-  else
-    root.value?.cancel()
 }
 
 defineExpose({ edit: () => root.value?.edit() })
@@ -71,29 +81,37 @@ defineExpose({ edit: () => root.value?.edit() })
 
 <template>
   <div class="editable" :data-empty="draft === '' || undefined">
-    <EditableRoot
-      ref="root"
-      v-model="draft"
-      :placeholder="placeholder"
-      :max-length="maxlength"
-      :submit-mode="mode"
-      :disabled="disabled"
-      select-on-focus
-      @submit="onSubmit"
-      @update:state="state => editing = state === 'edit'"
-    >
-      <EditableArea class="area">
-        <EditablePreview :as="as" class="preview" />
-        <EditableInput
-          :as="multiline ? 'textarea' : 'input'"
-          class="input"
-          :aria-label="label"
-          :aria-invalid="error ? 'true' : undefined"
-          :aria-describedby="error ? errorId : undefined"
-          @blur="onInputBlur"
-        />
-      </EditableArea>
-    </EditableRoot>
+    <component :is="as" :id="id" class="text">
+      <EditableRoot
+        ref="root"
+        v-model="draft"
+        as="span"
+        class="root"
+        placeholder=""
+        :max-length="maxlength"
+        submit-mode="both"
+        :disabled="disabled"
+        select-on-focus
+        @submit="onSubmit"
+        @update:state="state => editing = state === 'edit'"
+      >
+        <EditableArea as="span" class="area">
+          <EditablePreview class="preview" />
+          <EditableInput
+            as="textarea"
+            rows="1"
+            class="input"
+            :aria-label="label"
+            :aria-multiline="multiline ? undefined : 'false'"
+            :aria-invalid="error ? 'true' : undefined"
+            :aria-describedby="error ? errorId : undefined"
+            @keydown="onKeydown"
+            @input="fit"
+            @blur="onInputBlur"
+          />
+        </EditableArea>
+      </EditableRoot>
+    </component>
     <span v-if="error" :id="errorId" class="error" role="alert">{{ error }}</span>
   </div>
 </template>
@@ -104,6 +122,7 @@ defineExpose({ edit: () => root.value?.edit() })
   gap: var(--space-2xs);
 }
 
+.root,
 .area {
   display: grid;
 }
@@ -113,13 +132,19 @@ defineExpose({ edit: () => root.value?.edit() })
   display: none;
 }
 
-.preview {
-  margin: 0;
-  /* Keep the description's line breaks */
-  white-space: pre-wrap;
-  padding: var(--space-2xs) var(--space-xs);
+/* Same box for text and input, so switching between them doesn't move anything */
+.preview,
+.input {
   margin-inline: calc(-1 * var(--space-xs));
+  padding: var(--space-2xs) var(--space-xs);
+  border: var(--border-width-thin) solid transparent;
   border-radius: var(--radius-sm);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+.preview {
   cursor: text;
   transition: background var(--duration-fast) var(--ease-out);
 }
@@ -133,20 +158,15 @@ defineExpose({ edit: () => root.value?.edit() })
 }
 
 .input {
-  box-sizing: border-box;
+  display: block;
   inline-size: calc(100% + 2 * var(--space-xs));
-  margin-inline: calc(-1 * var(--space-xs));
-  padding: var(--space-2xs) var(--space-xs);
-  border: var(--border-width-thin) solid var(--color-border-default);
-  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border-color: var(--color-border-default);
   background: var(--color-bg-canvas);
-  color: var(--color-text-primary);
+  color: inherit;
   font: inherit;
-}
-
-textarea.input {
-  min-block-size: 3lh;
-  resize: vertical;
+  letter-spacing: inherit;
+  resize: none;
 }
 
 .error {

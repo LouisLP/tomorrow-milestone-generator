@@ -1,7 +1,7 @@
-import type { FieldFailure } from './useSavedChallenge'
-import { errorMessage, fieldErrors } from '../../i18n'
+import type { FieldFailure } from '../types/challenge.types'
+import { errorMessage, fieldErrors } from '../../../i18n'
 
-/** Translated message for a failed inline save. Call it where it's rendered. */
+/** Call where it renders, so it follows a language switch. */
 export function failureMessage(failure: FieldFailure | undefined, entity: 'challenge' | 'milestone'): string | undefined {
   if (!failure)
     return undefined

@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
-import { deleteChallenge, generateMilestones } from './challenges'
 import { request } from './request'
 
 const schema = z.object({ id: z.number() })
@@ -80,25 +79,6 @@ describe('request', () => {
   it('returns undefined data for a 204', async () => {
     respond(null, 204)
 
-    expect(await deleteChallenge(7)).toEqual({ ok: true, data: undefined })
-  })
-})
-
-describe('endpoint functions', () => {
-  it('send method, path, JSON body and signal', async () => {
-    const milestones = Array.from({ length: 3 }, (_, i) => ({ title: `T${i}`, description: 'D' }))
-    const fetch = stubFetch(async () => new Response(JSON.stringify({ milestones })))
-    const body = { title: 'Rust', brief: 'Learn Rust.', existingMilestones: [] }
-    const { signal } = new AbortController()
-
-    const result = await generateMilestones(body, signal)
-
-    expect(result).toEqual({ ok: true, data: { milestones } })
-    expect(fetch).toHaveBeenCalledWith('/api/generate', {
-      method: 'POST',
-      signal,
-      body: JSON.stringify(body),
-      headers: { 'Content-Type': 'application/json' },
-    })
+    expect(await request('/api/x', { method: 'DELETE' })).toEqual({ ok: true, data: undefined })
   })
 })

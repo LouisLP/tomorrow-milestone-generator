@@ -1,20 +1,15 @@
-<!--
-  The focus card: the current undecided draft with Reject / Skip / Accept, a skeleton while
-  generating, or "All drafts reviewed" with Save once the queue is empty. `focus()` moves
-  focus to the card (or to Save when the queue is empty) after a decision or undo.
--->
 <script setup lang="ts">
 import type { MilestoneContent } from '@shared'
-import type { DraftReview } from './useDraftReview'
+import type { DraftReview } from '../composables/useDraftReview'
 import { computed, nextTick, onScopeDispose, ref, useId, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import IconBan from '~icons/lucide/ban'
 import IconCheck from '~icons/lucide/check'
 import IconSkip from '~icons/lucide/skip-forward'
-import UniBadge from '../../ui/UniBadge.vue'
-import UniButton from '../../ui/UniButton.vue'
-import UniKbd from '../../ui/UniKbd.vue'
-import UniSpinner from '../../ui/UniSpinner.vue'
+import UniBadge from '../../../ui/UniBadge.vue'
+import UniButton from '../../../ui/UniButton.vue'
+import UniKbd from '../../../ui/UniKbd.vue'
+import UniSpinner from '../../../ui/UniSpinner.vue'
 import DraftEditor from './DraftEditor.vue'
 
 const props = defineProps<{
@@ -40,7 +35,7 @@ const titleId = useId()
 const generating = computed(() => props.review.status.value === 'generating')
 const current = computed(() => props.review.current.value)
 const queue = computed(() => props.review.drafts.value.filter(draft => draft.state === 'undecided'))
-// By key: `current` and `drafts` are different proxies of the same draft
+// By key: `current` and `drafts` hold different proxies of the same draft
 const position = computed(() => queue.value.findIndex(draft => draft.key === current.value?.key) + 1)
 
 const stillWorking = ref(false)
@@ -180,9 +175,9 @@ defineExpose({
   box-shadow: var(--shadow-md);
 }
 
-/* Focus lands here programmatically; keep the ring on the card's rounded edge */
-.card:focus-visible {
-  border-radius: var(--radius-lg);
+/* Programmatic focus target after a decision; the buttons inside keep their rings */
+.card:focus {
+  outline: none;
 }
 
 @media (prefers-reduced-motion: no-preference) {

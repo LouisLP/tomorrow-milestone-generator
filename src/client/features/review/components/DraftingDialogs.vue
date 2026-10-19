@@ -1,17 +1,13 @@
-<!--
-  The two confirms a `useDraftingFlow` page needs: "Discard your edits?" before a
-  Regenerate that would drop edited drafts, and "Discard drafts?" when leaving the page.
--->
 <script setup lang="ts">
-import type { DraftingFlow } from './useDraftingFlow'
+import type { DraftingFlow } from '../composables/useDraftingFlow'
 import { useI18n } from 'vue-i18n'
-import UniConfirmDialog from '../../ui/UniConfirmDialog.vue'
+import UniConfirmDialog from '../../../ui/UniConfirmDialog.vue'
 
 const props = defineProps<{ flow: DraftingFlow }>()
 
 const { t } = useI18n()
 
-// Props are shallow-readonly; the dialogs write through the flow's refs
+// Props are readonly; v-model writes through the flow's refs
 const { regenerateConfirmOpen, leaveConfirmOpen } = props.flow
 </script>
 

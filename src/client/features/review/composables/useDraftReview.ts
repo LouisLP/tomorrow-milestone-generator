@@ -1,35 +1,12 @@
-// Client-side review state for Draft Milestones (#4, #6, #7). One instance per page:
-// call `createDraftReview` in the page's setup; nothing is shared between pages.
 import type { GenerateResponse, MilestoneContent } from '@shared'
 import type { Ref } from 'vue'
-import type { ApiResult, ErrorCode } from '../../api'
+import type { ApiResult, ErrorCode } from '../../../api'
+import type { Draft, ReviewAction, ReviewStatus } from '../types/draft.types'
 import { MILESTONE_CAP } from '@shared'
 import { computed, getCurrentScope, onScopeDispose, readonly, ref, shallowRef } from 'vue'
 
-export type DraftState = 'undecided' | 'accepted' | 'rejected'
-
-export interface Draft {
-  key: string
-  title: string
-  description: string
-  state: DraftState
-  /** Deferred in the review queue. Not a Review Decision: the draft stays undecided. */
-  skipped: boolean
-  edited: boolean
-  origin: 'ai' | 'staff'
-}
-
-export type ReviewStatus = 'idle' | 'generating' | 'ready'
-
-/** What the last undoable change was, for the snackbar text. */
-export type ReviewAction
-  = | { kind: 'accept' | 'reject' | 'reset' | 'skip' | 'unskip' | 'edit' | 'add' | 'remove', title: string }
-    | { kind: 'acceptRemaining', count: number }
-
 export interface DraftReviewOptions {
-  /** Asks for a new batch; pages pass a closure over `generateMilestones` with title and brief. */
   fetchDrafts: (existing: MilestoneContent[], signal: AbortSignal) => Promise<ApiResult<GenerateResponse>>
-  /** Milestones the Challenge already has (empty on the new page). */
   savedMilestones: Ref<MilestoneContent[]>
 }
 
@@ -60,7 +37,7 @@ export function createDraftReview({ fetchDrafts, savedMilestones }: DraftReviewO
     return drafts.value.length > 0 ? 'ready' : 'idle'
   })
 
-  /** Disjoint buckets: `undecided` excludes skipped drafts, which `skipped` counts. */
+  /** Disjoint: `undecided` excludes skipped drafts. */
   const counts = computed(() => {
     const result = { undecided: 0, accepted: 0, rejected: 0, skipped: 0 }
     for (const draft of drafts.value) {
@@ -72,10 +49,9 @@ export function createDraftReview({ fetchDrafts, savedMilestones }: DraftReviewO
     return result
   })
 
-  /** Every draft without a Review Decision, skipped or not. */
+  /** Skipped drafts included. */
   const undecidedCount = computed(() => counts.value.undecided + counts.value.skipped)
 
-  /** Accepted drafts in order, ready to Save. */
   const accepted = computed(() => drafts.value.filter(draft => draft.state === 'accepted').map(content))
 
   const existingForPrompt = computed(() => [...savedMilestones.value.map(content), ...accepted.value])
@@ -85,7 +61,6 @@ export function createDraftReview({ fetchDrafts, savedMilestones }: DraftReviewO
 
   const hasUnsavedWork = computed(() => drafts.value.length > 0 || generating.value)
 
-  /** Regenerate replaces every non-accepted draft, so edits to those would be lost. */
   const regenerateDiscardsEdits = computed(() =>
     drafts.value.some(draft => draft.state !== 'accepted' && draft.edited),
   )
@@ -140,7 +115,7 @@ export function createDraftReview({ fetchDrafts, savedMilestones }: DraftReviewO
     decide(key, 'rejected')
   }
 
-  /** Takes back a Review Decision; the draft becomes the current one. */
+  /** Takes back a Review Decision and makes the draft current. */
   function reset(key: string) {
     const draft = find(key)
     if (!draft || draft.state === 'undecided')
@@ -161,7 +136,6 @@ export function createDraftReview({ fetchDrafts, savedMilestones }: DraftReviewO
     }
   }
 
-  /** Defers an undecided draft; the queue moves on to the next one. */
   function skip(key: string) {
     const draft = find(key)
     if (!draft || draft.state !== 'undecided' || draft.skipped)
@@ -172,7 +146,7 @@ export function createDraftReview({ fetchDrafts, savedMilestones }: DraftReviewO
       selectedKey.value = null
   }
 
-  /** Segment click: makes `key` current, taking back its decision or skip mark. */
+  /** Makes `key` current, taking back its decision or skip. */
   function select(key: string) {
     const draft = find(key)
     if (!draft)
@@ -186,7 +160,7 @@ export function createDraftReview({ fetchDrafts, savedMilestones }: DraftReviewO
     selectedKey.value = key
   }
 
-  /** Trims both fields and ignores empty ones. Never changes the draft's state. */
+  /** Trims; empty fields are ignored. */
   function edit(key: string, patch: Partial<MilestoneContent>) {
     const draft = find(key)
     if (!draft)
@@ -201,7 +175,7 @@ export function createDraftReview({ fetchDrafts, savedMilestones }: DraftReviewO
     draft.edited = true
   }
 
-  /** Writing a draft is the decision, so it starts accepted. Returns its key, or null if a field is empty. */
+  /** Writing a draft is the decision, so it starts accepted. `null` if a field is empty. */
   function addStaffDraft(patch: MilestoneContent) {
     const title = patch.title.trim()
     const description = patch.description.trim()
@@ -221,11 +195,7 @@ export function createDraftReview({ fetchDrafts, savedMilestones }: DraftReviewO
     drafts.value = drafts.value.filter(other => other.key !== key)
   }
 
-  /**
-   * Generates (or regenerates) a batch. On success accepted drafts stay, in order, and the
-   * new batch replaces everything else; undo history and skip marks are cleared. On failure
-   * or cancel the drafts are untouched.
-   */
+  /** Keeps accepted drafts and replaces the rest; failure or cancel changes nothing. */
   async function generate() {
     if (generating.value || atCap.value)
       return
@@ -264,7 +234,6 @@ export function createDraftReview({ fetchDrafts, savedMilestones }: DraftReviewO
     controller.value?.abort()
   }
 
-  /** Call after a successful Save. */
   function clear() {
     cancel()
     controller.value = null

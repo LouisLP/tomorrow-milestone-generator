@@ -1,20 +1,21 @@
 <script setup lang="ts">
 import type { ChallengeSummary } from '@shared'
 import type { ErrorCode } from '../../../api'
-import { onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, useTemplateRef } from 'vue'
 import { useI18n } from 'vue-i18n'
 import IconPlus from '~icons/lucide/plus'
-import { listChallenges } from '../../../api'
-import { errorMessage, formatRelativeTime } from '../../../i18n'
+import { errorMessage } from '../../../i18n'
+import UniConfirmDialog from '../../../ui/UniConfirmDialog.vue'
 import UniInlineAlert from '../../../ui/UniInlineAlert.vue'
 import UniSpinner from '../../../ui/UniSpinner.vue'
+import { deleteChallenge, listChallenges } from '../api/challenges.api'
+import ChallengeListItem from '../components/ChallengeListItem.vue'
 
-const { t, d, locale } = useI18n()
+const { t } = useI18n()
 
 const challenges = ref<ChallengeSummary[] | null>(null)
 const error = ref<ErrorCode | null>(null)
 const loading = ref(false)
-// One clock per load, so every row is measured against the same "now"
 const now = ref(new Date())
 
 async function load() {
@@ -30,12 +31,50 @@ async function load() {
 }
 
 onMounted(load)
+
+const challengeToDelete = ref<ChallengeSummary | null>(null)
+const deleteOpen = computed({
+  get: () => challengeToDelete.value !== null,
+  set: (open) => {
+    if (!open)
+      challengeToDelete.value = null
+  },
+})
+
+const heading = useTemplateRef('heading')
+const list = useTemplateRef('list')
+let focusTargetId: number | null = null
+
+async function confirmDelete() {
+  const target = challengeToDelete.value
+  if (!target)
+    return
+  const result = await deleteChallenge(target.id)
+  if (!result.ok && result.error.code !== 'not_found')
+    return errorMessage(result.error.code)
+  challenges.value = challenges.value?.filter(challenge => challenge.id !== target.id) ?? null
+}
+
+function onDeleteOpen(challenge: ChallengeSummary) {
+  focusTargetId = challenge.id
+  challengeToDelete.value = challenge
+}
+
+// Opened from a context menu, so there's no trigger to return to: back to the row, or the h1 once it's gone
+async function onDeleteClosed(event: Event) {
+  event.preventDefault()
+  await nextTick()
+  const row = list.value?.querySelector<HTMLElement>(`[data-challenge-id="${focusTargetId}"]`)
+  ;(row ?? heading.value)?.focus()
+}
 </script>
 
 <template>
   <div class="page">
     <header class="page-header">
-      <h1>{{ t('challenges.list.title') }}</h1>
+      <h1 ref="heading" tabindex="-1">
+        {{ t('challenges.list.title') }}
+      </h1>
       <RouterLink class="button-link" to="/challenges/new">
         <IconPlus aria-hidden="true" />
         {{ t('challenges.list.create') }}
@@ -66,20 +105,27 @@ onMounted(load)
       </RouterLink>
     </section>
 
-    <ul v-else class="list">
-      <li v-for="challenge in challenges" :key="challenge.id" class="row">
-        <RouterLink class="row-title" :to="`/challenges/${challenge.id}`">
-          {{ challenge.title }}
-        </RouterLink>
-        <p class="row-meta">
-          <span>{{ t('challenges.list.milestoneCount', challenge.milestoneCount) }}</span>
-          <span aria-hidden="true">·</span>
-          <time :datetime="challenge.updatedAt" :title="d(challenge.updatedAt, 'dateTime')">
-            {{ t('challenges.list.updated', { time: formatRelativeTime(challenge.updatedAt, locale, now) }) }}
-          </time>
-        </p>
-      </li>
+    <ul v-else ref="list" class="list">
+      <ChallengeListItem
+        v-for="challenge in challenges"
+        :key="challenge.id"
+        :challenge="challenge"
+        :now="now"
+        @delete="onDeleteOpen(challenge)"
+      />
     </ul>
+
+    <UniConfirmDialog
+      v-model:open="deleteOpen"
+      intent="danger"
+      :title="t('challenges.detail.deleteChallengeDialog.title')"
+      :description="t('challenges.detail.deleteChallengeDialog.description', { title: challengeToDelete?.title ?? '', count: challengeToDelete?.milestoneCount ?? 0 }, challengeToDelete?.milestoneCount ?? 0)"
+      :confirm-label="t('challenges.detail.deleteChallenge')"
+      :cancel-label="t('actions.cancel')"
+      :error-fallback="errorMessage('unknown')"
+      :confirm="confirmDelete"
+      @close-auto-focus="onDeleteClosed"
+    />
   </div>
 </template>
 
@@ -99,7 +145,7 @@ onMounted(load)
   gap: var(--space-sm);
 }
 
-/* A link that looks like a primary UniButton: it navigates, so it stays an <a> */
+/* Looks like a primary UniButton, but navigates, so it stays an <a> */
 .button-link {
   display: inline-flex;
   align-items: center;
@@ -155,43 +201,5 @@ onMounted(load)
   gap: var(--space-xs);
   padding: 0;
   list-style: none;
-}
-
-.row {
-  position: relative;
-  display: grid;
-  gap: var(--space-2xs);
-  padding: var(--space-sm) var(--space-md);
-  border: var(--border-width-thin) solid var(--color-border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--color-bg-surface);
-  transition: background var(--duration-fast) var(--ease-out);
-}
-
-.row:hover {
-  background: var(--color-bg-surface-hover);
-}
-
-.row-title {
-  color: var(--color-text-primary);
-  font-weight: var(--font-weight-semibold);
-  text-decoration: none;
-  overflow-wrap: anywhere;
-}
-
-/* Whole row is the link's hit area; the link itself keeps the focus ring */
-.row-title::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-}
-
-.row-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2xs);
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
 }
 </style>

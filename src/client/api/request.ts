@@ -2,7 +2,7 @@ import type { Issue, ServerErrorCode } from '@shared'
 import type { z } from 'zod'
 import { errorBody } from '@shared'
 
-/** Server codes plus the failures only the client can see. */
+/** Server codes plus client-only failures. */
 export type ErrorCode = ServerErrorCode | 'network_error' | 'unexpected_response' | 'unknown' | 'aborted'
 
 export interface ApiError {
@@ -24,7 +24,7 @@ function failure(code: ErrorCode, issues?: Issue[]): { ok: false, error: ApiErro
   return { ok: false, error: { code, ...(issues && { issues }) } }
 }
 
-/** Reads the body as JSON; `undefined` when it is empty or not JSON. */
+/** `undefined` for an empty or non-JSON body. */
 async function readJson(res: Response): Promise<unknown> {
   const text = await res.text()
   if (!text)
@@ -37,11 +37,7 @@ async function readJson(res: Response): Promise<unknown> {
   }
 }
 
-/**
- * Calls the API and parses the response with `schema`. Never throws: every failure,
- * including an aborted `signal`, comes back as `{ ok: false, error }`. Without a
- * `schema` the body is ignored and `data` is `undefined` (for 204 endpoints).
- */
+/** Never throws: every failure, abort included, resolves as `{ ok: false }`. No `schema` means no body (204). */
 export async function request<T>(path: string, options: RequestOptions & { schema: z.ZodType<T> }): Promise<ApiResult<T>>
 export async function request(path: string, options?: RequestOptions): Promise<ApiResult<undefined>>
 export async function request<T>(
@@ -72,7 +68,6 @@ export async function request<T>(
     return parsed.success ? { ok: true, data: parsed.data } : failure('unexpected_response')
   }
   catch {
-    // fetch() and reading the body only throw on abort or a network failure.
     return failure(signal?.aborted ? 'aborted' : 'network_error')
   }
 }

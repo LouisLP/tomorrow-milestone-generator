@@ -1,10 +1,11 @@
 import type { ChallengeDetail, Milestone } from '@shared'
 import { LIMITS } from '@shared'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import * as api from '../../api'
-import { createSavedChallenge, milestoneFieldKey } from './useSavedChallenge'
+import * as api from '../api/challenges.api'
+import { milestoneFieldKey } from '../utils/fieldKey.utils'
+import { createSavedChallenge } from './useSavedChallenge'
 
-vi.mock('../../api')
+vi.mock('../api/challenges.api')
 
 const NOW = '2026-10-19T12:00:00.000Z'
 

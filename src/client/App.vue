@@ -1,28 +1,32 @@
 <script setup lang="ts">
-import { watchEffect } from 'vue'
+import { nextTick, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRoute } from 'vue-router'
-import LanguageSwitcher from './components/LanguageSwitcher.vue'
+import { useRoute, useRouter } from 'vue-router'
+import AppNavbar from './features/navbar/components/AppNavbar.vue'
+import { focusPageHeading } from './utils/focus.utils'
 
 const { t } = useI18n()
 const route = useRoute()
+const router = useRouter()
 
-// Re-runs on navigation and on a language switch.
 watchEffect(() => {
   const appName = t('app.name')
   const { titleKey } = route.meta
   document.title = titleKey ? `${t(titleKey)} · ${appName}` : appName
 })
+
+router.afterEach(async (_to, from, failure) => {
+  // The first load keeps the browser's own focus
+  if (failure || from.matched.length === 0)
+    return
+  await nextTick()
+  focusPageHeading()
+})
 </script>
 
 <template>
   <a class="skip-link" href="#main">{{ t('app.skipToContent') }}</a>
-  <header class="header">
-    <RouterLink class="app-name" to="/">
-      {{ t('app.name') }}
-    </RouterLink>
-    <LanguageSwitcher />
-  </header>
+  <AppNavbar />
   <main id="main" class="main" tabindex="-1">
     <RouterView />
   </main>
@@ -42,23 +46,6 @@ watchEffect(() => {
 
 .skip-link:focus-visible {
   translate: 0 0;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-md);
-  padding: var(--space-sm) var(--space-gutter);
-  border-bottom: var(--border-width-thin) solid var(--color-border-subtle);
-}
-
-.app-name {
-  color: var(--color-text-primary);
-  font-family: var(--font-heading);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  text-decoration: none;
 }
 
 .main {

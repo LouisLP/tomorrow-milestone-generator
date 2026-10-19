@@ -1,4 +1,3 @@
-<!-- Small status label, e.g. "Edited" or "Yours". Text comes in through the slot. -->
 <script setup lang="ts">
 withDefaults(defineProps<{ tone?: 'neutral' | 'success' | 'danger' | 'warning' }>(), {
   tone: 'neutral',

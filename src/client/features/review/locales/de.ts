@@ -43,7 +43,7 @@ export default {
       accepted: 'Akzeptiert',
       rejected: 'Abgelehnt',
       empty: 'Noch nichts',
-      yours: 'Eigener',
+      yours: 'Eigener Entwurf',
       backToQueue: 'Zurück in die Warteschlange',
       backToQueueNamed: 'Zurück in die Warteschlange: {title}',
       remove: 'Entfernen',
@@ -52,7 +52,7 @@ export default {
     },
     add: {
       title: 'Eigenen Meilenstein schreiben',
-      description: 'Er landet direkt bei Akzeptiert, ohne Prüfung.',
+      description: 'Er wird direkt akzeptiert, ohne Prüfung.',
       submit: 'Als akzeptiert hinzufügen',
     },
     regenerate: {
@@ -67,7 +67,7 @@ export default {
       confirmLabel: 'Verwerfen und verlassen',
     },
     save: {
-      label: 'Keine Meilensteine speichern | {n} Meilenstein speichern | {n} Meilensteine speichern',
+      label: 'Keine Meilensteine zum Speichern | {n} Meilenstein speichern | {n} Meilensteine speichern',
       undecided: '{n} noch offen',
       overCap: 'Eine Challenge kann höchstens {cap} Meilensteine haben. Entferne die akzeptierten Entwürfe. | Eine Challenge kann höchstens {cap} Meilensteine haben. Akzeptiere höchstens {n}. | Eine Challenge kann höchstens {cap} Meilensteine haben. Akzeptiere höchstens {n}.',
       confirmTitle: 'Mit {n} offenem Entwurf speichern? | Mit {n} offenen Entwürfen speichern?',

@@ -1,7 +1,4 @@
-<!--
-  Busy indicator. Decorative by default (the busy control carries aria-busy); pass `label`
-  when the spinner stands alone and has to be announced.
--->
+<!-- Decorative unless `label` is set (for a spinner that stands alone). -->
 <script setup lang="ts">
 defineProps<{ label?: string }>()
 </script>
@@ -27,7 +24,7 @@ defineProps<{ label?: string }>()
   animation: spin 0.8s linear infinite;
 }
 
-/* No rotation for reduced motion: a slow pulse still says "busy" */
+/* Reduced motion: a slow pulse instead of a spin */
 @media (prefers-reduced-motion: reduce) {
   .spinner {
     animation: pulse var(--duration-ambient) var(--ease-in-out) infinite;

@@ -1,4 +1,3 @@
-<!-- A keyboard key, e.g. a shortcut hint. Text comes in through the slot. -->
 <template>
   <kbd class="kbd"><slot /></kbd>
 </template>

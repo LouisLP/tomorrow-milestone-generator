@@ -1,5 +1,4 @@
-// Code shared by client and server (zod schemas and inferred types). Must stay free of
-// Node, DOM and Vue imports; lint enforces this. Import as `@shared`.
+// No Node, DOM or Vue imports here (lint enforces it)
 export * from './errors'
 export * from './limits'
 export * from './schemas'

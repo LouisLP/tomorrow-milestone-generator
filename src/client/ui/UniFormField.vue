@@ -1,8 +1,4 @@
-<!--
-  Label + one control (Reka Field). The slotted input/textarea gets its id, aria-invalid and
-  aria-describedby wired up. Pass `value` and `maxlength` to get a character counter once
-  the value passes 80% of the limit.
--->
+<!-- Pass `value` and `maxlength` for a counter past 80% of the limit. -->
 <script setup lang="ts">
 import { FieldControl, FieldDescription, FieldError, FieldLabel, FieldRoot } from 'reka-ui'
 import { computed } from 'vue'
@@ -64,8 +60,7 @@ const showCounter = computed(() => !!props.maxlength && length.value > props.max
   font-weight: var(--font-weight-medium);
 }
 
-/* The control is slotted (and passed through Reka's as-child, which drops :slotted's
-   scope), so style it as a descendant: one look for every field */
+/* Reka's as-child drops the :slotted scope, so style the control as a descendant */
 .field :deep(:is(input, textarea)) {
   padding: var(--space-xs) var(--space-sm);
   border: var(--border-width-thin) solid var(--color-border-default);

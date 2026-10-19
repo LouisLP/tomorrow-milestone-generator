@@ -5,9 +5,6 @@ export default {
     name: 'Generatore di milestone',
     skipToContent: 'Vai al contenuto principale',
   },
-  language: {
-    label: 'Lingua',
-  },
   actions: {
     cancel: 'Annulla',
     confirm: 'Conferma',

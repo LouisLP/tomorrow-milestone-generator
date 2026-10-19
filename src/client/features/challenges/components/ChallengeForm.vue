@@ -1,8 +1,3 @@
-<!--
-  Title + Brief with the Generate button (#7 validation UX). The page owns validation (via
-  `useDraftingFlow`) and passes `errors` in; call `focusFirstInvalid()` after a failed
-  submit. Once drafts exist the button becomes Regenerate and Done folds the form.
--->
 <script setup lang="ts">
 import { LIMITS } from '@shared'
 import { nextTick, useTemplateRef } from 'vue'
@@ -17,7 +12,6 @@ defineProps<{
   errors: Record<string, string>
   generating: boolean
   atCap: boolean
-  /** Drafts exist: Generate becomes Regenerate and Done appears. */
   drafted: boolean
 }>()
 
@@ -37,7 +31,6 @@ async function focusFirstInvalid() {
   formElement.value?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
 }
 
-/** Focuses the title, e.g. after Edit details replaced the button that had focus. */
 async function focus() {
   await nextTick()
   formElement.value?.querySelector<HTMLElement>('input')?.focus()
