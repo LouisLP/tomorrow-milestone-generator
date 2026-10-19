@@ -54,6 +54,17 @@ export default {
       description: 'It goes straight to Accepted, no review needed.',
       submit: 'Add as accepted',
     },
+    regenerate: {
+      label: 'Regenerate',
+      hint: 'Regenerate keeps accepted drafts and replaces the rest.',
+      confirmTitle: 'Discard your edits?',
+      confirmDescription: 'Regenerating replaces undecided and rejected drafts, including ones you edited. Accepted drafts are kept.',
+    },
+    leave: {
+      confirmTitle: 'Discard drafts?',
+      confirmDescription: 'Your draft milestones aren\'t saved yet. Leaving this page discards them.',
+      confirmLabel: 'Discard and leave',
+    },
     save: {
       label: 'Save no milestones | Save {n} milestone | Save {n} milestones',
       undecided: '{n} still undecided',

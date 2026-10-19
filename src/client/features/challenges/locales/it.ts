@@ -15,7 +15,15 @@ export default {
     },
     new: {
       title: 'Nuova sfida',
-      placeholder: 'Segnaposto: scrivi titolo e brief, genera le bozze di milestone, rivedile, salva.',
+      detailsLabel: 'Dettagli della challenge',
+      editDetails: 'Modifica dettagli',
+    },
+    form: {
+      title: 'Titolo della challenge',
+      brief: 'Brief',
+      briefHint: 'Cosa devono imparare o costruire i partecipanti? L\'AI propone le milestone nella lingua del brief.',
+      generate: 'Genera milestone',
+      generating: 'Bozze di milestone in corso…',
     },
     detail: {
       title: 'Sfida',

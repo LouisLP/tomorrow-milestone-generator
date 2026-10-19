@@ -13,7 +13,15 @@ export default {
     },
     new: {
       title: 'New challenge',
-      placeholder: 'Placeholder: write a title and Brief, generate Draft Milestones, review, save.',
+      detailsLabel: 'Challenge details',
+      editDetails: 'Edit details',
+    },
+    form: {
+      title: 'Challenge title',
+      brief: 'Brief',
+      briefHint: 'What should people learn or build? The AI drafts milestones in the Brief\'s language.',
+      generate: 'Generate milestones',
+      generating: 'Drafting milestones…',
     },
     detail: {
       title: 'Challenge',

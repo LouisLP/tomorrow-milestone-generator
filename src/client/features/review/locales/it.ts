@@ -55,6 +55,17 @@ export default {
       description: 'Finisce direttamente tra le accettate, senza revisione.',
       submit: 'Aggiungi come accettata',
     },
+    regenerate: {
+      label: 'Rigenera',
+      hint: 'Rigenerando, le bozze accettate restano e le altre vengono sostituite.',
+      confirmTitle: 'Scartare le tue modifiche?',
+      confirmDescription: 'Rigenerare sostituisce le bozze da decidere e rifiutate, anche quelle modificate. Le bozze accettate restano.',
+    },
+    leave: {
+      confirmTitle: 'Scartare le bozze?',
+      confirmDescription: 'Le bozze di milestone non sono ancora salvate. Se lasci la pagina, andranno perse.',
+      confirmLabel: 'Scarta ed esci',
+    },
     save: {
       label: 'Salva nessuna milestone | Salva {n} milestone | Salva {n} milestone',
       undecided: '{n} ancora da decidere',

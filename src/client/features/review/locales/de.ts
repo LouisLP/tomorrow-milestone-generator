@@ -55,6 +55,17 @@ export default {
       description: 'Er landet direkt bei Akzeptiert, ohne Prüfung.',
       submit: 'Als akzeptiert hinzufügen',
     },
+    regenerate: {
+      label: 'Neu generieren',
+      hint: 'Beim Neugenerieren bleiben akzeptierte Entwürfe erhalten, der Rest wird ersetzt.',
+      confirmTitle: 'Deine Änderungen verwerfen?',
+      confirmDescription: 'Neugenerieren ersetzt offene und abgelehnte Entwürfe, auch bearbeitete. Akzeptierte Entwürfe bleiben erhalten.',
+    },
+    leave: {
+      confirmTitle: 'Entwürfe verwerfen?',
+      confirmDescription: 'Deine Meilenstein-Entwürfe sind noch nicht gespeichert. Wenn du die Seite verlässt, gehen sie verloren.',
+      confirmLabel: 'Verwerfen und verlassen',
+    },
     save: {
       label: 'Keine Meilensteine speichern | {n} Meilenstein speichern | {n} Meilensteine speichern',
       undecided: '{n} noch offen',
