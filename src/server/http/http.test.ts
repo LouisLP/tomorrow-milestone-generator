@@ -89,7 +89,7 @@ describe('error handling', () => {
   it('answers unknown routes with a JSON 404', async () => {
     vi.spyOn(console, 'log').mockImplementation(() => {})
 
-    const res = await createApp({ db: createDb(':memory:') }).request('/api/nope')
+    const res = await createApp({ db: createDb(':memory:'), generator: { generate: vi.fn() } }).request('/api/nope')
 
     expect(res.status).toBe(404)
     expect(await res.json()).toEqual({ error: { code: 'not_found' } })

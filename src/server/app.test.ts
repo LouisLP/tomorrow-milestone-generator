@@ -1,10 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createApp } from './app'
 import { createDb } from './db'
 
 describe('createApp', () => {
   it('responds to the health check', async () => {
-    const app = createApp({ db: createDb(':memory:') })
+    const app = createApp({ db: createDb(':memory:'), generator: { generate: vi.fn() } })
 
     const res = await app.request('/api/health')
 
