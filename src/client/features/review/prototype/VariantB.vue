@@ -18,7 +18,7 @@ import IconPlus from '~icons/lucide/plus'
 import IconSkip from '~icons/lucide/skip-forward'
 import IconTrash from '~icons/lucide/trash-2'
 import IconUndo from '~icons/lucide/undo-2'
-import IconX from '~icons/lucide/x'
+import IconBan from '~icons/lucide/ban'
 import ConfirmDialog from './ConfirmDialog.vue'
 import type { Draft, DraftState } from './useDraftReview'
 import { useDraftReview } from './useDraftReview'
@@ -185,8 +185,8 @@ const confirmEarlySave = ref(false)
           </EditableArea>
         </EditableRoot>
         <div class="decide">
-          <button class="btn btn--lg" @click="decide('rejected')">
-            <IconX /> Reject <span class="kbd">R</span>
+          <button class="btn btn--lg btn--reject" @click="decide('rejected')">
+            <IconBan /> Reject <span class="kbd">R</span>
           </button>
           <button class="btn btn--lg btn--ghost" @click="startEdit">
             <IconPencil /> Edit <span class="kbd">E</span>
@@ -293,7 +293,7 @@ const confirmEarlySave = ref(false)
       </CollapsibleRoot>
 
       <div class="rail-save">
-        <button class="btn btn--primary btn--lg" :disabled="!canSave" @click="onSaveClick">
+        <button class="btn btn--ghost" :disabled="!canSave" @click="onSaveClick">
           Save {{ counts.accepted }} {{ counts.accepted === 1 ? 'milestone' : 'milestones' }}
         </button>
         <p v-if="queue.length" class="rail-note">
@@ -372,6 +372,7 @@ const confirmEarlySave = ref(false)
 .decide { display: flex; gap: var(--space-xs); flex-wrap: wrap; margin-top: auto; }
 .decide .btn--secondary { margin-inline-start: auto; }
 .queue-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-xs); min-height: 2rem; }
+.rail-save .btn { justify-content: center; }
 .rail-save { display: grid; gap: var(--space-2xs); margin-top: var(--space-md); padding-top: var(--space-md); border-top: var(--border-width-thin) solid var(--color-border-subtle); }
 .rail-note { font-size: var(--font-size-xs); color: var(--color-text-muted); text-align: center; }
 .add-form { display: grid; gap: var(--space-md); }
@@ -403,7 +404,8 @@ const confirmEarlySave = ref(false)
 .mini-edit-title { font-weight: var(--font-weight-semibold); }
 .mini-edit-desc { color: var(--color-text-secondary); display: block; }
 .mini-actions { display: flex; justify-content: flex-end; }
-.mini--rejected { display: flex; align-items: center; gap: var(--space-2xs); background: transparent; color: var(--color-text-muted); }
+.mini--rejected { display: flex; align-items: center; gap: var(--space-2xs); background: var(--color-danger-subtle-bg); color: var(--color-danger-subtle-fg); }
+.mini--rejected s { text-decoration-color: oklch(from currentcolor l c h / 0.5); }
 .mini--rejected s { flex: 1; }
 .mini-title { flex: 1; text-align: start; border: 0; background: none; color: inherit; cursor: pointer; font: inherit; }
 .mini-title:hover { text-decoration: underline; }

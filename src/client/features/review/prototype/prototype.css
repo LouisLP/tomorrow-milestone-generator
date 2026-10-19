@@ -1,3 +1,23 @@
+/*
+ * PROPOSAL (#6): a red scale for Kabuki. Kabuki has no danger hue, but #4 needs one
+ * (delete Milestone/Challenge, discard drafts). "beni" = safflower crimson. Hue 18 keeps
+ * it clear of kaki (36-50). Would live in tokens/primitives.css + semantic.css upstream.
+ */
+:root {
+  --beni-50: oklch(97% 0.016 18);
+  --beni-300: oklch(76% 0.11 18);
+  --beni-500: oklch(60% 0.18 18);
+  --beni-600: oklch(52% 0.18 18);
+  --beni-700: oklch(44% 0.15 18);
+  --beni-800: oklch(36% 0.12 18);
+  --beni-950: oklch(20% 0.05 18);
+
+  --color-danger-default: light-dark(var(--beni-600), var(--beni-500));
+  --color-danger-subtle-bg: light-dark(var(--beni-50), var(--beni-950));
+  --color-danger-subtle-fg: light-dark(var(--beni-800), var(--beni-300));
+  --color-danger-border: light-dark(var(--beni-300), var(--beni-700));
+}
+
 /* PROTOTYPE (#6): shared button/field styles so variants differ in structure, not chrome. */
 .btn {
   display: inline-flex;
@@ -23,7 +43,10 @@
 .btn--ghost { background: transparent; border-color: transparent; color: var(--color-text-secondary); }
 .btn--ghost:hover:not(:disabled) { background: var(--color-bg-surface-hover); color: var(--color-text-primary); }
 .btn--lg { padding: var(--space-xs) var(--space-md); font-size: var(--font-size-md); }
-.btn svg { flex-shrink: 0; }
+.btn svg { flex-shrink: 0; width: 0.875em; height: 0.875em; }
+.btn .kbd { margin-inline-start: var(--space-2xs); }
+/* Reject: neutral at rest so the queue stays calm, danger tint on intent */
+.btn--reject:hover:not(:disabled) { background: var(--color-danger-subtle-bg); border-color: var(--color-danger-border); color: var(--color-danger-subtle-fg); }
 
 .field { display: grid; gap: var(--space-2xs); }
 .field label { font-size: var(--font-size-sm); color: var(--color-text-secondary); font-weight: var(--font-weight-medium); }
