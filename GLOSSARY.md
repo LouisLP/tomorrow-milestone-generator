@@ -13,11 +13,11 @@ The free-text description of a Challenge that gives the AI its context.
 _Avoid_: Description, prompt
 
 **Draft Milestone**:
-An AI-proposed milestone (title + description) that no human has reviewed yet; never persisted.
+A proposed milestone (title + description) awaiting a Review Decision; never persisted. Usually AI-proposed; a staff-written one counts as already accepted, since writing it is the decision.
 _Avoid_: Suggestion, proposal, generated milestone
 
 **Review Decision**:
-A staff member's verdict on one Draft Milestone: accepted (optionally after editing) or rejected.
+A staff member's verdict on one Draft Milestone: accepted (optionally after editing) or rejected. Skipping a draft in the review queue only defers it; it is not a Review Decision.
 _Avoid_: Approval, status
 
 **Milestone**:
