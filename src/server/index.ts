@@ -4,6 +4,7 @@ import { serveStatic } from '@hono/node-server/serve-static'
 import { createApp } from './app'
 import { createDb } from './db'
 import { parseEnv } from './env'
+import { createClaudeGenerator } from './llm'
 
 const parsed = parseEnv(process.env)
 if (!parsed.ok) {
@@ -13,7 +14,10 @@ if (!parsed.ok) {
 const { env } = parsed
 
 const db = createDb(env.DATABASE_URL)
-const app = createApp({ db })
+const app = createApp({
+  db,
+  generator: createClaudeGenerator({ apiKey: env.ANTHROPIC_API_KEY, model: env.CLAUDE_MODEL }),
+})
 
 if (env.NODE_ENV === 'production') {
   // Serve the built SPA; any non-file path falls back to index.html so deep links reload.

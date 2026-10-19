@@ -14,7 +14,7 @@ beforeEach(() => {
   vi.spyOn(console, 'log').mockImplementation(() => {})
   vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-01-01T00:00:00Z') })
   db = createDb(':memory:')
-  app = createApp({ db })
+  app = createApp({ db, generator: { generate: vi.fn() } })
 })
 
 afterEach(() => {
