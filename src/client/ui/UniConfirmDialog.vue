@@ -2,7 +2,9 @@
   Every confirm in the app (Reka AlertDialog). `confirm` may be async: while it runs the
   confirm button shows a spinner and the dialog can't be dismissed. It closes the dialog on
   success. To report a failure, resolve with the (translated) message, or reject and the
-  dialog shows `errorFallback`; either way it stays open with the error inside.
+  dialog shows `errorFallback`; either way it stays open with the error inside. Focus goes
+  back to the trigger on close; when the trigger is gone, handle `closeAutoFocus` (call
+  `preventDefault()` and move focus yourself).
 -->
 <script setup lang="ts">
 import { AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogOverlay, AlertDialogPortal, AlertDialogRoot, AlertDialogTitle } from 'reka-ui'
@@ -19,6 +21,8 @@ const props = defineProps<{
   confirm?: () => string | void | Promise<string | void>
   errorFallback?: string
 }>()
+
+const emit = defineEmits<{ closeAutoFocus: [event: Event] }>()
 
 const open = defineModel<boolean>('open', { required: true })
 
@@ -60,7 +64,11 @@ function blockWhilePending(event: Event) {
   <AlertDialogRoot v-model:open="open">
     <AlertDialogPortal>
       <AlertDialogOverlay class="overlay" />
-      <AlertDialogContent class="content" @escape-key-down="blockWhilePending">
+      <AlertDialogContent
+        class="content"
+        @escape-key-down="blockWhilePending"
+        @close-auto-focus="event => emit('closeAutoFocus', event)"
+      >
         <AlertDialogTitle class="title">
           {{ title }}
         </AlertDialogTitle>

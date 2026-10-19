@@ -34,7 +34,12 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       proxy: {
-        '/api': `http://localhost:${PORT}`,
+        '/api': {
+          target: `http://localhost:${PORT}`,
+          // src/client/api/ modules share the prefix (e.g. /api/index.ts): Vite serves those.
+          // API paths never end in a file extension.
+          bypass: req => (/\.\w+$/.test(req.url?.split('?')[0] ?? '') ? req.url : undefined),
+        },
       },
     },
   }
