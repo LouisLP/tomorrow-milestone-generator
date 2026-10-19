@@ -2,7 +2,7 @@
  * Kabuki — semantic tokens.
  *
  * Intent-based names referencing primitives (tokens/primitives.css).
- * Components consume ONLY these tokens, never sumi/kaki/seiji directly.
+ * Components consume ONLY these tokens, never the primitive scales directly.
  *
  * Every color is wrapped in light-dark(light, dark). The theme is dark-first:
  * dark values are the canonical curtain palette, light values mirror the same
@@ -77,11 +77,25 @@
   --color-secondary-border: light-dark(var(--seiji-300), var(--seiji-700));
 
   /* ------------------------------------------------------------------ */
-  /* Status — borrows seiji, doesn't own it                              */
+  /* Status — success borrows seiji, doesn't own it                      */
   /* ------------------------------------------------------------------ */
   --color-success-default: light-dark(var(--seiji-600), var(--seiji-500));
   --color-success-subtle-bg: light-dark(var(--seiji-50), var(--seiji-950));
   --color-success-subtle-fg: light-dark(var(--seiji-800), var(--seiji-300));
+
+  /* Danger (beni) — destructive actions, failures, rejected drafts */
+  --color-danger-default: light-dark(var(--beni-600), var(--beni-500));
+  --color-danger-subtle-bg: light-dark(var(--beni-50), var(--beni-950));
+  --color-danger-subtle-fg: light-dark(var(--beni-800), var(--beni-300));
+  --color-danger-border: light-dark(var(--beni-300), var(--beni-700));
+  /* Opposite ink per theme: white wins on the light theme's deeper beni,
+     black on the dark theme's brighter one */
+  --color-text-on-danger: light-dark(var(--sumi-50), var(--sumi-950));
+
+  /* Warning (ukon) — caution states, e.g. skipped drafts */
+  --color-warning-default: light-dark(var(--ukon-600), var(--ukon-500));
+  --color-warning-subtle-bg: light-dark(var(--ukon-50), var(--ukon-950));
+  --color-warning-subtle-fg: light-dark(var(--ukon-800), var(--ukon-300));
 
   /* ------------------------------------------------------------------ */
   /* Brand band + inverse surface — the footer: a full-bleed kaki band   */
