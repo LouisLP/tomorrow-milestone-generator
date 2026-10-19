@@ -1,0 +1,15 @@
+// Client SPA + shared code (browser).
+{
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "paths": {
+      "@shared/*": ["./src/shared/*"]
+    },
+    "types": ["vite/client", "unplugin-icons/types/vue"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "include": ["src/client/**/*", "src/client/**/*.vue", "src/shared/**/*"],
+  "exclude": ["src/**/*.test.ts"]
+}
