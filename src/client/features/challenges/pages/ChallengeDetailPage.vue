@@ -1,10 +1,17 @@
+<!--
+  Challenge detail (#4, #7): the saved Challenge, editable inline, and below its Milestones
+  the append flow (#19): Generate more milestones → review queue → Save appends at the end.
+  Generation uses the Challenge's saved title and Brief.
+-->
 <script setup lang="ts">
-import type { Milestone } from '@shared'
-import { LIMITS } from '@shared'
-import { computed, ref, useTemplateRef, watch } from 'vue'
+import type { Milestone, MilestoneContent } from '@shared'
+import { LIMITS, MILESTONE_CAP } from '@shared'
+import { computed, nextTick, ref, useTemplateRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import IconArrowLeft from '~icons/lucide/arrow-left'
+import IconRefresh from '~icons/lucide/refresh-cw'
+import IconSparkles from '~icons/lucide/sparkles'
 import IconTrash from '~icons/lucide/trash-2'
 import { errorMessage } from '../../../i18n'
 import UniButton from '../../../ui/UniButton.vue'
@@ -12,6 +19,9 @@ import UniConfirmDialog from '../../../ui/UniConfirmDialog.vue'
 import UniInlineAlert from '../../../ui/UniInlineAlert.vue'
 import UniInlineEditable from '../../../ui/UniInlineEditable.vue'
 import UniSpinner from '../../../ui/UniSpinner.vue'
+import DraftingDialogs from '../../review/DraftingDialogs.vue'
+import ReviewQueue from '../../review/ReviewQueue.vue'
+import { useDraftingFlow } from '../../review/useDraftingFlow'
 import SavedMilestoneItem from '../components/SavedMilestoneItem.vue'
 import { failureMessage } from '../failureMessage'
 import { createSavedChallenge, milestoneFieldKey } from '../useSavedChallenge'
@@ -33,6 +43,31 @@ function parseId(value: string) {
 watch(() => props.id, id => saved.load(parseId(id)), { immediate: true })
 
 const milestonesHeading = useTemplateRef('milestonesHeading')
+
+// Append: generate from the saved title and Brief, with the saved Milestones as context
+const details = computed(() => ({ title: challenge.value?.title ?? '', brief: challenge.value?.brief ?? '' }))
+const savedMilestones = computed(() => challenge.value?.milestones ?? [])
+const flow = useDraftingFlow({ details, savedMilestones })
+const { review, saving, saveError } = flow
+
+const generating = computed(() => review.status.value === 'generating')
+const drafted = computed(() => review.drafts.value.length > 0)
+
+function onGenerate() {
+  if (drafted.value)
+    flow.regenerate()
+  else
+    flow.generate()
+}
+
+async function onSave(accepted: MilestoneContent[]) {
+  const result = await flow.save(() => saved.appendMilestones(accepted))
+  if (!result?.ok)
+    return
+  // The review queue is gone with its drafts; land on the list that now holds them
+  await nextTick()
+  milestonesHeading.value?.focus()
+}
 
 // Delete Milestone
 const milestoneToDelete = ref<Milestone | null>(null)
@@ -77,7 +112,7 @@ async function confirmDeleteChallenge() {
 </script>
 
 <template>
-  <div class="page">
+  <div class="page" :class="{ wide: drafted }">
     <RouterLink class="back" to="/">
       <IconArrowLeft aria-hidden="true" />
       {{ t('actions.backToList') }}
@@ -161,7 +196,41 @@ async function confirmDeleteChallenge() {
         </ol>
       </section>
 
-      <!-- #19: the append flow (Generate → Review → Save more Milestones) goes here -->
+      <section class="section append" aria-labelledby="append-heading">
+        <div class="append-actions">
+          <h2 id="append-heading" class="section-heading" :class="{ 'visually-hidden': !drafted }">
+            {{ t('challenges.detail.newMilestones') }}
+          </h2>
+          <UniButton
+            :variant="drafted ? undefined : 'primary'"
+            :loading="generating"
+            :disabled="review.atCap.value"
+            @click="onGenerate"
+          >
+            <template #icon>
+              <IconRefresh v-if="drafted" />
+              <IconSparkles v-else />
+            </template>
+            {{ generating ? t('challenges.form.generating') : drafted ? t('review.regenerate.label') : t('challenges.detail.generateMore') }}
+          </UniButton>
+          <span v-if="review.atCap.value" class="hint">
+            {{ t('challenges.detail.capReached', { cap: MILESTONE_CAP }) }}
+          </span>
+          <span v-else-if="drafted && !generating" class="hint">
+            {{ t('review.regenerate.hint') }}
+          </span>
+        </div>
+
+        <ReviewQueue
+          :review="review"
+          :saving="saving"
+          :save-error="saveError"
+          :saved-count="challenge.milestones.length"
+          @save="onSave"
+          @retry-generate="onGenerate"
+          @cancel-generate="flow.cancel"
+        />
+      </section>
     </article>
 
     <UniConfirmDialog
@@ -187,15 +256,23 @@ async function confirmDeleteChallenge() {
       :error-fallback="errorMessage('unknown')"
       :confirm="confirmDeleteChallenge"
     />
+
+    <DraftingDialogs :flow="flow" />
   </div>
 </template>
 
 <style scoped>
 .page {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-lg);
   max-inline-size: 48rem;
   margin-inline: auto;
+}
+
+/* The review queue needs room for its side rail */
+.page.wide {
+  max-inline-size: 72rem;
 }
 
 .back {
@@ -279,6 +356,17 @@ async function confirmDeleteChallenge() {
 .hint {
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
+}
+
+.append-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.append-actions .section-heading {
+  margin-inline-end: auto;
 }
 
 .milestones {

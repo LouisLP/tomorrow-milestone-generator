@@ -1,7 +1,7 @@
 // State for the saved side of the detail page (#4, #7): load a Challenge, edit its fields
-// and Milestones inline, delete either. One instance per page; nothing is shared.
-import type { ChallengeDetail, Issue } from '@shared'
-import type { ErrorCode } from '../../api'
+// and Milestones inline, delete either, append accepted drafts. One instance per page.
+import type { ChallengeDetail, Issue, MilestoneContent } from '@shared'
+import type { ApiResult, ErrorCode } from '../../api'
 import { updateChallengeRequest, updateMilestoneRequest, zodIssues } from '@shared'
 import { computed, nextTick, ref, shallowRef } from 'vue'
 import * as api from '../../api'
@@ -143,6 +143,17 @@ export function createSavedChallenge() {
     return null
   }
 
+  /** Adds accepted drafts at the end; on success the page shows the returned Challenge. */
+  async function appendMilestones(milestones: MilestoneContent[]): Promise<ApiResult<ChallengeDetail>> {
+    const current = challenge.value
+    if (!current)
+      return { ok: false, error: { code: 'not_found' } }
+    const result = await api.appendMilestones(current.id, { milestones })
+    if (result.ok && challenge.value?.id === current.id)
+      challenge.value = result.data
+    return result
+  }
+
   /** Returns the failure code, or `null` once gone (already gone counts as done). */
   async function deleteChallenge(): Promise<ErrorCode | null> {
     const current = challenge.value
@@ -166,6 +177,7 @@ export function createSavedChallenge() {
     saveMilestoneField,
     deleteMilestone,
     deleteChallenge,
+    appendMilestones,
   }
 }
 

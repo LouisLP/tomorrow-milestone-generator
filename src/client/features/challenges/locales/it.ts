@@ -40,6 +40,9 @@ export default {
         title: 'Eliminare questa milestone?',
         description: '«{title}» verrà rimossa dalla sfida. L\'operazione non può essere annullata.',
       },
+      newMilestones: 'Nuove milestone',
+      generateMore: 'Genera altre milestone',
+      capReached: 'Una sfida può avere al massimo {cap} milestone. Eliminane una per generarne altre.',
       deleteChallenge: 'Elimina sfida',
       deleteChallengeDialog: {
         title: 'Eliminare questa sfida?',
