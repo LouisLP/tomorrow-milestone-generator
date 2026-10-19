@@ -7,13 +7,12 @@
   auto-accepted. Queue-wide actions (accept remaining, save) live outside the card.
 -->
 <script setup lang="ts">
-import { CollapsibleContent, CollapsibleRoot, CollapsibleTrigger, DialogClose, DialogContent, DialogOverlay, DialogPortal, DialogRoot, DialogTitle, EditableArea, EditableInput, EditablePreview, EditableRoot, ProgressIndicator, ProgressRoot } from 'reka-ui'
+import { CollapsibleContent, CollapsibleRoot, CollapsibleTrigger, DialogClose, DialogContent, DialogOverlay, DialogPortal, DialogRoot, DialogTitle, EditableArea, EditableInput, EditablePreview, EditableRoot, ProgressRoot } from 'reka-ui'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import IconCheck from '~icons/lucide/check'
 import IconCheckCheck from '~icons/lucide/check-check'
 import IconChevron from '~icons/lucide/chevron-down'
 import IconChevronUp from '~icons/lucide/chevron-up'
-import IconPencil from '~icons/lucide/pencil'
 import IconPlus from '~icons/lucide/plus'
 import IconSkip from '~icons/lucide/skip-forward'
 import IconTrash from '~icons/lucide/trash-2'
@@ -32,6 +31,25 @@ const accepted = computed(() => drafts.value.filter(d => d.state === 'accepted')
 const rejected = computed(() => drafts.value.filter(d => d.state === 'rejected'))
 const reviewable = computed(() => drafts.value.filter(d => !d.pending && d.origin === 'ai').length)
 const reviewed = computed(() => reviewable.value - queue.value.length)
+
+// skipped = seen but deferred; still undecided in the store, only the queue cares
+const skippedKeys = ref<string[]>([])
+type Segment = 'pending' | 'undecided' | 'skipped' | 'accepted' | 'rejected'
+const segments = computed(() => drafts.value
+  .filter(d => d.origin === 'ai')
+  .map(d => ({
+    key: d.key,
+    title: d.title,
+    state: (d.pending ? 'pending' : d.state === 'undecided' && skippedKeys.value.includes(d.key) ? 'skipped' : d.state) as Segment,
+  })))
+const tally = computed(() => {
+  const t = { accepted: 0, rejected: 0, skipped: 0 }
+  for (const s of segments.value) {
+    if (s.state in t)
+      t[s.state as keyof typeof t]++
+  }
+  return t
+})
 
 const snack = ref<{ text: string, id: number }>()
 let snackTimer: ReturnType<typeof setTimeout> | undefined
@@ -52,6 +70,8 @@ function decide(state: DraftState) {
 }
 
 function skip() {
+  if (current.value && !skippedKeys.value.includes(current.value.key))
+    skippedKeys.value.push(current.value.key)
   const idx = current.value ? queue.value.indexOf(current.value) : -1
   currentKey.value = queue.value[(idx + 1) % queue.value.length]?.key
 }
@@ -64,6 +84,7 @@ function doUndo() {
 }
 
 function moveBack(d: Draft) {
+  skippedKeys.value = skippedKeys.value.filter(k => k !== d.key)
   setState(d.key, 'undecided')
   currentKey.value = d.key
 }
@@ -136,14 +157,25 @@ const confirmEarlySave = ref(false)
     </h2>
 
     <div class="stage">
+      <!-- one segment per AI draft, in order, coloured by its fate -->
       <ProgressRoot :model-value="reviewed" :max="Math.max(reviewable, 1)" class="progress" :aria-label="`${reviewed} of ${reviewable} reviewed`">
-        <ProgressIndicator class="progress-bar" :style="{ width: `${(reviewed / Math.max(reviewable, 1)) * 100}%` }" />
+        <span
+          v-for="s in segments"
+          :key="s.key"
+          class="segment"
+          :data-state="s.state"
+          :data-current="s.key === current?.key || undefined"
+          :title="s.title ? `${s.title}: ${s.state}` : undefined"
+        />
       </ProgressRoot>
       <div class="queue-bar">
         <p class="progress-label">
           {{ status === 'generating' ? 'Drafting…' : `${reviewed} of ${reviewable} reviewed` }}
+          <template v-for="(n, state) in tally" :key="state">
+            <span v-if="n" class="legend" :data-state="state">{{ n }} {{ state }}</span>
+          </template>
         </p>
-        <button v-if="queue.length > 1" class="btn btn--ghost" @click="acceptAllUndecided">
+        <button v-if="queue.length > 1" class="btn" data-variant="ghost" @click="acceptAllUndecided">
           <IconCheckCheck /> Accept remaining {{ queue.length }}
         </button>
       </div>
@@ -161,6 +193,7 @@ const confirmEarlySave = ref(false)
         <p class="eyebrow">
           Draft {{ queue.indexOf(current) + 1 }} of {{ queue.length }} left
           <span v-if="current.edited" class="badge">Edited</span>
+          <span class="edit-hint">Click text to edit <span class="kbd">E</span></span>
         </p>
         <EditableRoot
           ref="focusTitle"
@@ -185,16 +218,13 @@ const confirmEarlySave = ref(false)
           </EditableArea>
         </EditableRoot>
         <div class="decide">
-          <button class="btn btn--lg btn--reject" @click="decide('rejected')">
+          <button class="btn" data-size="lg" data-intent="danger" @click="decide('rejected')">
             <IconBan /> Reject <span class="kbd">R</span>
           </button>
-          <button class="btn btn--lg btn--ghost" @click="startEdit">
-            <IconPencil /> Edit <span class="kbd">E</span>
-          </button>
-          <button v-if="queue.length > 1" class="btn btn--lg btn--ghost" @click="skip">
+          <button v-if="queue.length > 1" class="btn" data-size="lg" data-variant="ghost" @click="skip">
             <IconSkip /> Skip <span class="kbd">S</span>
           </button>
-          <button class="btn btn--lg btn--secondary" @click="decide('accepted')">
+          <button class="btn" data-size="lg" data-variant="secondary" @click="decide('accepted')">
             <IconCheck /> Accept <span class="kbd">A</span>
           </button>
         </div>
@@ -211,7 +241,7 @@ const confirmEarlySave = ref(false)
           </template>
         </p>
         <div class="decide">
-          <button class="btn btn--primary btn--lg" :disabled="!canSave" @click="save">
+          <button class="btn" data-variant="primary" data-size="lg" :disabled="!canSave" @click="save">
             Save {{ counts.accepted }} milestones
           </button>
         </div>
@@ -221,7 +251,7 @@ const confirmEarlySave = ref(false)
     <aside class="rail" aria-label="Decided drafts">
       <h3>Accepted <span class="count">{{ accepted.length }}</span></h3>
       <ol class="mini-list">
-        <li v-for="d in accepted" :key="d.key" class="mini" :class="{ 'mini--open': expandedKey === d.key }">
+        <li v-for="d in accepted" :key="d.key" class="mini" :data-open="expandedKey === d.key || undefined">
           <div class="mini-head">
             <button v-if="expandedKey !== d.key" class="mini-title" :aria-expanded="false" @click="toggleExpanded(d)">
               {{ d.title }}
@@ -240,10 +270,10 @@ const confirmEarlySave = ref(false)
               </EditableArea>
             </EditableRoot>
             <span v-if="d.origin === 'staff'" class="badge">Yours</span>
-            <button v-if="expandedKey === d.key" class="btn btn--ghost icon" aria-label="Collapse" @click="expandedKey = undefined">
+            <button v-if="expandedKey === d.key" class="btn icon" data-variant="ghost" aria-label="Collapse" @click="expandedKey = undefined">
               <IconChevronUp />
             </button>
-            <button v-else-if="d.origin === 'ai'" class="btn btn--ghost icon" aria-label="Move back to queue" @click="moveBack(d)">
+            <button v-else-if="d.origin === 'ai'" class="btn icon" data-variant="ghost" aria-label="Move back to queue" @click="moveBack(d)">
               <IconUndo />
             </button>
           </div>
@@ -259,10 +289,10 @@ const confirmEarlySave = ref(false)
               </EditableArea>
             </EditableRoot>
             <div class="mini-actions">
-              <button v-if="d.origin === 'ai'" class="btn btn--ghost" @click="moveBack(d)">
+              <button v-if="d.origin === 'ai'" class="btn" data-variant="ghost" @click="moveBack(d)">
                 <IconUndo /> Back to queue
               </button>
-              <button v-else class="btn btn--ghost" @click="removeDraft(d.key)">
+              <button v-else class="btn" data-variant="ghost" @click="removeDraft(d.key)">
                 <IconTrash /> Remove
               </button>
             </div>
@@ -272,19 +302,19 @@ const confirmEarlySave = ref(false)
           Nothing yet
         </li>
       </ol>
-      <button class="btn btn--ghost" :disabled="status === 'generating'" @click="openAdd">
+      <button class="btn" data-variant="ghost" :disabled="status === 'generating'" @click="openAdd">
         <IconPlus /> Add your own
       </button>
 
       <CollapsibleRoot v-if="rejected.length" class="rejected">
-        <CollapsibleTrigger class="btn btn--ghost collapse-trigger">
+        <CollapsibleTrigger class="btn collapse-trigger" data-variant="ghost">
           Rejected <span class="count">{{ rejected.length }}</span> <IconChevron />
         </CollapsibleTrigger>
         <CollapsibleContent>
           <ol class="mini-list">
-            <li v-for="d in rejected" :key="d.key" class="mini mini--rejected">
+            <li v-for="d in rejected" :key="d.key" class="mini" data-state="rejected">
               <s>{{ d.title }}</s>
-              <button class="btn btn--ghost icon" aria-label="Move back to queue" @click="moveBack(d)">
+              <button class="btn icon" data-variant="ghost" aria-label="Move back to queue" @click="moveBack(d)">
                 <IconUndo />
               </button>
             </li>
@@ -293,7 +323,7 @@ const confirmEarlySave = ref(false)
       </CollapsibleRoot>
 
       <div class="rail-save">
-        <button class="btn btn--ghost" :disabled="!canSave" @click="onSaveClick">
+        <button class="btn" data-variant="ghost" :disabled="!canSave" @click="onSaveClick">
           Save {{ counts.accepted }} {{ counts.accepted === 1 ? 'milestone' : 'milestones' }}
         </button>
         <p v-if="queue.length" class="rail-note">
@@ -304,7 +334,7 @@ const confirmEarlySave = ref(false)
 
     <div v-if="snack" :key="snack.id" class="snack" role="status">
       {{ snack.text }}
-      <button v-if="canUndo" class="btn btn--ghost" @click="doUndo">
+      <button v-if="canUndo" class="btn" data-variant="ghost" @click="doUndo">
         Undo <span class="kbd">⌘Z</span>
       </button>
     </div>
@@ -328,7 +358,7 @@ const confirmEarlySave = ref(false)
             <DialogClose class="btn">
               Cancel
             </DialogClose>
-            <button class="btn btn--secondary" type="submit" :disabled="!canAdd">
+            <button class="btn" data-variant="secondary" type="submit" :disabled="!canAdd">
               <IconCheck /> Add as accepted
             </button>
           </div>
@@ -350,9 +380,24 @@ const confirmEarlySave = ref(false)
 .triage { display: grid; gap: var(--space-xl); grid-template-columns: minmax(0, 1fr); align-items: start; }
 @media (min-width: 52rem) { .triage { grid-template-columns: minmax(0, 1fr) 18rem; } }
 .stage { display: grid; gap: var(--space-sm); }
-.progress { height: 6px; border-radius: var(--radius-full); background: var(--color-bg-surface-raised); overflow: hidden; }
-.progress-bar { height: 100%; background: var(--color-secondary-default); transition: width var(--duration-normal) var(--ease-out); }
-.progress-label { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.progress { display: flex; gap: 3px; height: 6px; }
+.segment {
+  flex: 1;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-surface-raised);
+  transition: background var(--duration-normal) var(--ease-out), scale var(--duration-fast) var(--ease-out);
+}
+.segment[data-state='accepted'] { background: var(--color-success-default); }
+.segment[data-state='rejected'] { background: var(--color-danger-default); }
+.segment[data-state='skipped'] { background: var(--color-warning-default); }
+.segment[data-state='pending'] { background: var(--color-bg-surface-hover); }
+.segment[data-current] { outline: var(--border-width-thin) solid var(--color-text-secondary); outline-offset: 2px; }
+.progress-label { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); font-size: var(--font-size-sm); color: var(--color-text-muted); }
+.legend { display: inline-flex; align-items: center; gap: var(--space-2xs); }
+.legend::before { content: ''; width: 0.5rem; height: 0.5rem; border-radius: var(--radius-full); }
+.legend[data-state='accepted']::before { background: var(--color-success-default); }
+.legend[data-state='rejected']::before { background: var(--color-danger-default); }
+.legend[data-state='skipped']::before { background: var(--color-warning-default); }
 .focus {
   display: grid;
   gap: var(--space-md);
@@ -366,11 +411,12 @@ const confirmEarlySave = ref(false)
   animation: enter var(--duration-normal) var(--ease-out);
 }
 @keyframes enter { from { opacity: 0; translate: 0 8px; } }
+.edit-hint { margin-inline-start: auto; font-size: var(--font-size-xs); }
 .eyebrow { display: flex; gap: var(--space-xs); align-items: center; font-size: var(--font-size-sm); color: var(--color-text-muted); }
 .focus-title { font-size: var(--font-size-2xl); }
 .focus-desc { font-size: var(--font-size-lg); color: var(--color-text-secondary); line-height: var(--line-height-relaxed); max-width: 60ch; }
 .decide { display: flex; gap: var(--space-xs); flex-wrap: wrap; margin-top: auto; }
-.decide .btn--secondary { margin-inline-start: auto; }
+.decide .btn[data-variant='secondary'] { margin-inline-start: auto; }
 .queue-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-xs); min-height: 2rem; }
 .rail-save .btn { justify-content: center; }
 .rail-save { display: grid; gap: var(--space-2xs); margin-top: var(--space-md); padding-top: var(--space-md); border-top: var(--border-width-thin) solid var(--color-border-subtle); }
@@ -398,15 +444,15 @@ const confirmEarlySave = ref(false)
   font-size: var(--font-size-sm);
 }
 .mini-head { display: flex; align-items: center; gap: var(--space-2xs); }
-.mini--open { padding: var(--space-xs); outline: var(--border-width-thin) solid var(--color-secondary-border); }
+.mini[data-open] { padding: var(--space-xs); outline: var(--border-width-thin) solid var(--color-secondary-border); }
 .mini-edit { display: grid; gap: var(--space-xs); }
 .mini-title-edit { flex: 1; min-width: 0; }
 .mini-edit-title { font-weight: var(--font-weight-semibold); }
 .mini-edit-desc { color: var(--color-text-secondary); display: block; }
 .mini-actions { display: flex; justify-content: flex-end; }
-.mini--rejected { display: flex; align-items: center; gap: var(--space-2xs); background: var(--color-danger-subtle-bg); color: var(--color-danger-subtle-fg); }
-.mini--rejected s { text-decoration-color: oklch(from currentcolor l c h / 0.5); }
-.mini--rejected s { flex: 1; }
+.mini[data-state='rejected'] { display: flex; align-items: center; gap: var(--space-2xs); background: var(--color-danger-subtle-bg); color: var(--color-danger-subtle-fg); }
+.mini[data-state='rejected'] s { text-decoration-color: oklch(from currentcolor l c h / 0.5); }
+.mini[data-state='rejected'] s { flex: 1; }
 .mini-title { flex: 1; text-align: start; border: 0; background: none; color: inherit; cursor: pointer; font: inherit; }
 .mini-title:hover { text-decoration: underline; }
 .icon { padding: var(--space-2xs); }

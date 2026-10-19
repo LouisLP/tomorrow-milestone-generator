@@ -67,7 +67,7 @@ function onGenerate() {
           <strong>{{ title }}</strong>
           <span>{{ brief }}</span>
         </div>
-        <button class="btn btn--ghost" @click="detailsOpen = true">
+        <button class="btn" data-variant="ghost" @click="detailsOpen = true">
           <IconPencil /> Edit details
         </button>
         <button class="btn" :disabled="status === 'generating'" @click="onGenerate">
@@ -89,12 +89,12 @@ function onGenerate() {
           <textarea id="brief" v-model="brief" class="input" maxlength="4000" />
         </div>
         <div class="form-actions">
-          <button class="btn btn--lg" :class="drafts.length ? '' : 'btn--primary'" :disabled="status === 'generating' || !title.trim() || !brief.trim()" @click="onGenerate">
+          <button class="btn" data-size="lg" :data-variant="drafts.length ? undefined : 'primary'" :disabled="status === 'generating' || !title.trim() || !brief.trim()" @click="onGenerate">
             <component :is="drafts.length ? IconRefresh : IconSparkles" :class="{ spin: status === 'generating' }" />
             {{ status === 'generating' ? 'Drafting milestones…' : drafts.length ? 'Regenerate' : 'Generate milestones' }}
           </button>
           <span v-if="drafts.length && status !== 'generating'" class="hint">Regenerate keeps accepted drafts and replaces the rest.</span>
-          <button v-if="reviewing" class="btn btn--ghost" @click="detailsOpen = false">
+          <button v-if="reviewing" class="btn" data-variant="ghost" @click="detailsOpen = false">
             <IconChevronUp /> Done
           </button>
         </div>

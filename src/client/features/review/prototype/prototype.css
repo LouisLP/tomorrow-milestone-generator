@@ -1,5 +1,8 @@
 /*
- * PROPOSAL (#6): a red scale for Kabuki. Kabuki has no danger hue, but #4 needs one
+ * PROPOSAL (#6): two new Kabuki scales. "ukon" = turmeric yellow (hue 85) for caution states
+ * such as skipped drafts. Clear of kaki (36-50) and seiji (165).
+ *
+ * And a red scale for Kabuki. Kabuki has no danger hue, but #4 needs one
  * (delete Milestone/Challenge, discard drafts). "beni" = safflower crimson. Hue 18 keeps
  * it clear of kaki (36-50). Would live in tokens/primitives.css + semantic.css upstream.
  */
@@ -11,6 +14,17 @@
   --beni-700: oklch(44% 0.15 18);
   --beni-800: oklch(36% 0.12 18);
   --beni-950: oklch(20% 0.05 18);
+
+  --ukon-50: oklch(97% 0.03 85);
+  --ukon-300: oklch(85% 0.12 85);
+  --ukon-500: oklch(78% 0.15 85);
+  --ukon-600: oklch(68% 0.14 85);
+  --ukon-800: oklch(45% 0.09 85);
+  --ukon-950: oklch(22% 0.04 85);
+
+  --color-warning-default: light-dark(var(--ukon-600), var(--ukon-500));
+  --color-warning-subtle-bg: light-dark(var(--ukon-50), var(--ukon-950));
+  --color-warning-subtle-fg: light-dark(var(--ukon-800), var(--ukon-300));
 
   --color-danger-default: light-dark(var(--beni-600), var(--beni-500));
   --color-danger-subtle-bg: light-dark(var(--beni-50), var(--beni-950));
@@ -36,17 +50,17 @@
 }
 .btn:hover:not(:disabled) { background: var(--color-bg-surface-hover); }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-.btn--primary { background: var(--color-accent-default); border-color: transparent; color: var(--color-text-on-accent); }
-.btn--primary:hover:not(:disabled) { background: var(--color-accent-hover); }
-.btn--secondary { background: var(--color-secondary-default); border-color: transparent; color: var(--color-text-on-accent); }
-.btn--secondary:hover:not(:disabled) { background: var(--color-secondary-hover); }
-.btn--ghost { background: transparent; border-color: transparent; color: var(--color-text-secondary); }
-.btn--ghost:hover:not(:disabled) { background: var(--color-bg-surface-hover); color: var(--color-text-primary); }
-.btn--lg { padding: var(--space-xs) var(--space-md); font-size: var(--font-size-md); }
+.btn[data-variant='primary'] { background: var(--color-accent-default); border-color: transparent; color: var(--color-text-on-accent); }
+.btn[data-variant='primary']:hover:not(:disabled) { background: var(--color-accent-hover); }
+.btn[data-variant='secondary'] { background: var(--color-secondary-default); border-color: transparent; color: var(--color-text-on-accent); }
+.btn[data-variant='secondary']:hover:not(:disabled) { background: var(--color-secondary-hover); }
+.btn[data-variant='ghost'] { background: transparent; border-color: transparent; color: var(--color-text-secondary); }
+.btn[data-variant='ghost']:hover:not(:disabled) { background: var(--color-bg-surface-hover); color: var(--color-text-primary); }
+.btn[data-size='lg'] { padding: var(--space-xs) var(--space-md); font-size: var(--font-size-md); }
 .btn svg { flex-shrink: 0; width: 0.875em; height: 0.875em; }
 .btn .kbd { margin-inline-start: var(--space-2xs); }
 /* Reject: neutral at rest so the queue stays calm, danger tint on intent */
-.btn--reject:hover:not(:disabled) { background: var(--color-danger-subtle-bg); border-color: var(--color-danger-border); color: var(--color-danger-subtle-fg); }
+.btn[data-intent='danger']:hover:not(:disabled) { background: var(--color-danger-subtle-bg); border-color: var(--color-danger-border); color: var(--color-danger-subtle-fg); }
 
 .field { display: grid; gap: var(--space-2xs); }
 .field label { font-size: var(--font-size-sm); color: var(--color-text-secondary); font-weight: var(--font-weight-medium); }

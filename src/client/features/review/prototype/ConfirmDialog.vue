@@ -18,10 +18,10 @@ const open = defineModel<boolean>('open', { required: true })
           <AlertDialogCancel class="btn">
             Cancel
           </AlertDialogCancel>
-          <AlertDialogAction v-if="altLabel" class="btn btn--secondary" @click="emit('alt')">
+          <AlertDialogAction v-if="altLabel" class="btn" data-variant="secondary" @click="emit('alt')">
             {{ altLabel }}
           </AlertDialogAction>
-          <AlertDialogAction class="btn btn--primary" @click="emit('confirm')">
+          <AlertDialogAction class="btn" data-variant="primary" @click="emit('confirm')">
             {{ confirmLabel }}
           </AlertDialogAction>
         </div>

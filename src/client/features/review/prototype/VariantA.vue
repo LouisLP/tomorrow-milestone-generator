@@ -46,11 +46,11 @@ function acceptAllAndSave() {
         Review drafts
       </h2>
       <p class="summary" aria-live="polite">
-        <span class="chip chip--accepted">{{ counts.accepted }} accepted</span>
+        <span class="chip" data-state="accepted">{{ counts.accepted }} accepted</span>
         <span class="chip">{{ counts.undecided }} undecided</span>
-        <span class="chip chip--rejected">{{ counts.rejected }} rejected</span>
+        <span class="chip" data-state="rejected">{{ counts.rejected }} rejected</span>
       </p>
-      <button class="btn btn--ghost" :disabled="!counts.undecided" @click="acceptAllUndecided">
+      <button class="btn" data-variant="ghost" :disabled="!counts.undecided" @click="acceptAllUndecided">
         <IconCheckCheck /> Accept all undecided
       </button>
     </div>
@@ -67,7 +67,7 @@ function acceptAllAndSave() {
           <div class="rejected-row">
             <span class="num">{{ i + 1 }}</span>
             <s>{{ d.title }}</s>
-            <button class="btn btn--ghost" @click="setState(d.key, 'undecided')">
+            <button class="btn" data-variant="ghost" @click="setState(d.key, 'undecided')">
               <IconUndo /> Restore
             </button>
           </div>
@@ -89,7 +89,7 @@ function acceptAllAndSave() {
                 <EditablePreview class="title" />
                 <EditableInput class="input title-input" maxlength="120" />
               </EditableArea>
-              <EditableEditTrigger v-if="!isEditing" class="btn btn--ghost icon" aria-label="Edit title">
+              <EditableEditTrigger v-if="!isEditing" class="btn icon" data-variant="ghost" aria-label="Edit title">
                 <IconPencil />
               </EditableEditTrigger>
             </EditableRoot>
@@ -118,14 +118,14 @@ function acceptAllAndSave() {
               :aria-label="`Decision for ${d.title}`"
               @update:model-value="v => onToggle(d.key, v)"
             >
-              <ToggleGroupItem value="accepted" class="toggle-item toggle-item--accept">
+              <ToggleGroupItem value="accepted" class="toggle-item" data-intent="accept">
                 <IconCheck /> Accept
               </ToggleGroupItem>
-              <ToggleGroupItem value="rejected" class="toggle-item toggle-item--reject">
+              <ToggleGroupItem value="rejected" class="toggle-item" data-intent="reject">
                 <IconX /> Reject
               </ToggleGroupItem>
             </ToggleGroupRoot>
-            <button v-else class="btn btn--ghost" @click="removeDraft(d.key)">
+            <button v-else class="btn" data-variant="ghost" @click="removeDraft(d.key)">
               <IconTrash /> Remove
             </button>
           </div>
@@ -144,7 +144,7 @@ function acceptAllAndSave() {
         <strong>{{ counts.accepted }}</strong> {{ counts.accepted === 1 ? 'milestone' : 'milestones' }} will be saved
         <template v-if="counts.undecided"> · {{ counts.undecided }} still undecided</template>
       </span>
-      <button class="btn btn--primary btn--lg" :disabled="!canSave" @click="onSave">
+      <button class="btn" data-variant="primary" data-size="lg" :disabled="!canSave" @click="onSave">
         Save challenge
       </button>
     </footer>
@@ -173,8 +173,8 @@ function acceptAllAndSave() {
   font-size: var(--font-size-xs);
   color: var(--color-text-secondary);
 }
-.chip--accepted { background: var(--color-success-subtle-bg); color: var(--color-success-subtle-fg); }
-.chip--rejected { color: var(--color-text-muted); }
+.chip[data-state='accepted'] { background: var(--color-success-subtle-bg); color: var(--color-success-subtle-fg); }
+.chip[data-state='rejected'] { color: var(--color-text-muted); }
 
 .list { display: grid; gap: var(--space-sm); }
 .card {
@@ -221,8 +221,8 @@ function acceptAllAndSave() {
 }
 .toggle-item + .toggle-item { border-inline-start: var(--border-width-thin) solid var(--color-border-default); }
 .toggle-item:hover { background: var(--color-bg-surface-hover); }
-.toggle-item--accept[data-state='on'] { background: var(--color-success-default); color: var(--color-text-on-accent); }
-.toggle-item--reject[data-state='on'] { background: var(--color-bg-surface-hover); color: var(--color-text-primary); }
+.toggle-item[data-intent='accept'][data-state='on'] { background: var(--color-success-default); color: var(--color-text-on-accent); }
+.toggle-item[data-intent='reject'][data-state='on'] { background: var(--color-bg-surface-hover); color: var(--color-text-primary); }
 .rejected-row { display: flex; align-items: center; gap: var(--space-xs); }
 .rejected-row s { flex: 1; }
 .add {

@@ -44,11 +44,11 @@ function addOwn() {
 
 <template>
   <section v-if="drafts.length" class="board" aria-label="Review drafts">
-    <div class="col col--drafts">
+    <div class="col" data-role="drafts">
       <header class="col-head">
         <h2>AI drafts</h2>
         <span class="count">{{ counts.undecided }}</span>
-        <button class="btn btn--ghost" :disabled="!counts.undecided" @click="acceptAllUndecided">
+        <button class="btn" data-variant="ghost" :disabled="!counts.undecided" @click="acceptAllUndecided">
           Accept all <IconArrowRight />
         </button>
       </header>
@@ -68,13 +68,13 @@ function addOwn() {
               <p>{{ d.description }}</p>
             </div>
             <div class="row-actions">
-              <button class="btn btn--ghost icon" aria-label="Reject" title="Reject" @click="setState(d.key, 'rejected')">
+              <button class="btn icon" data-variant="ghost" aria-label="Reject" title="Reject" @click="setState(d.key, 'rejected')">
                 <IconX />
               </button>
-              <button class="btn btn--ghost icon" aria-label="Edit" title="Edit" @click="openEdit(d)">
+              <button class="btn icon" data-variant="ghost" aria-label="Edit" title="Edit" @click="openEdit(d)">
                 <IconPencil />
               </button>
-              <button class="btn btn--secondary" @click="setState(d.key, 'accepted')">
+              <button class="btn" data-variant="secondary" @click="setState(d.key, 'accepted')">
                 Accept <IconArrowRight />
               </button>
             </div>
@@ -93,7 +93,7 @@ function addOwn() {
       </div>
     </div>
 
-    <div class="col col--challenge">
+    <div class="col" data-role="challenge">
       <header class="col-head">
         <h2>Your challenge</h2>
         <span class="count">{{ counts.accepted }} / {{ CAP }}</span>
@@ -109,13 +109,13 @@ function addOwn() {
             <p>{{ d.description }}</p>
           </div>
           <div class="row-actions">
-            <button class="btn btn--ghost icon" aria-label="Edit" title="Edit" @click="openEdit(d)">
+            <button class="btn icon" data-variant="ghost" aria-label="Edit" title="Edit" @click="openEdit(d)">
               <IconPencil />
             </button>
-            <button v-if="d.origin === 'ai'" class="btn btn--ghost icon" aria-label="Back to drafts" title="Back to drafts" @click="setState(d.key, 'undecided')">
+            <button v-if="d.origin === 'ai'" class="btn icon" data-variant="ghost" aria-label="Back to drafts" title="Back to drafts" @click="setState(d.key, 'undecided')">
               <IconArrowLeft />
             </button>
-            <button v-else class="btn btn--ghost icon" aria-label="Remove" title="Remove" @click="removeDraft(d.key)">
+            <button v-else class="btn icon" data-variant="ghost" aria-label="Remove" title="Remove" @click="removeDraft(d.key)">
               <IconTrash />
             </button>
           </div>
@@ -125,12 +125,12 @@ function addOwn() {
         </li>
       </ol>
 
-      <button class="btn btn--ghost add" :disabled="status === 'generating'" @click="addOwn">
+      <button class="btn add" data-variant="ghost" :disabled="status === 'generating'" @click="addOwn">
         <IconPlus /> Add milestone
       </button>
 
       <footer class="col-foot">
-        <button class="btn btn--primary btn--lg" :disabled="!canSave" @click="save">
+        <button class="btn" data-variant="primary" data-size="lg" :disabled="!canSave" @click="save">
           Save challenge
         </button>
         <p v-if="counts.undecided" class="note">
@@ -163,7 +163,7 @@ function addOwn() {
             <DialogClose class="btn">
               Cancel
             </DialogClose>
-            <button class="btn btn--primary" type="submit">
+            <button class="btn" data-variant="primary" type="submit">
               Save
             </button>
           </div>
@@ -177,8 +177,8 @@ function addOwn() {
 .board { display: grid; gap: var(--space-lg); grid-template-columns: minmax(0, 1fr); align-items: start; }
 @media (min-width: 56rem) { .board { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 .col { display: grid; gap: var(--space-sm); padding: var(--space-md); border-radius: var(--radius-lg); }
-.col--drafts { background: var(--color-bg-surface); border: var(--border-width-thin) dashed var(--color-border-default); }
-.col--challenge { background: var(--color-bg-surface-raised); border: var(--border-width-thin) solid var(--color-border-default); box-shadow: var(--shadow-md); position: sticky; top: var(--space-lg); }
+.col[data-role='drafts'] { background: var(--color-bg-surface); border: var(--border-width-thin) dashed var(--color-border-default); }
+.col[data-role='challenge'] { background: var(--color-bg-surface-raised); border: var(--border-width-thin) solid var(--color-border-default); box-shadow: var(--shadow-md); position: sticky; top: var(--space-lg); }
 .col-head { display: flex; align-items: center; gap: var(--space-xs); }
 .col-head h2 { font-size: var(--font-size-lg); }
 .col-head .btn { margin-inline-start: auto; }
