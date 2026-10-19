@@ -1,24 +1,27 @@
 <!--
   PROTOTYPE (#6) Variant B, "Triage queue".
   One undecided draft at a time in a big focus card with keyboard shortcuts (A / R / E / S,
-  Cmd/Ctrl+Z). Every decision is undoable from a snackbar. Editing happens in a modal (Reka
-  Dialog). Decided drafts collect in a side rail. Save is the natural end of the queue.
+  Cmd/Ctrl+Z). Every decision is undoable from a snackbar. Only two fields, so editing is
+  inline (Reka Editable): click the text, or press E. Accepted drafts in the side rail expand
+  to edit in place. Save is the natural end of the queue.
 -->
 <script setup lang="ts">
-import { CollapsibleContent, CollapsibleRoot, CollapsibleTrigger, DialogClose, DialogContent, DialogOverlay, DialogPortal, DialogRoot, DialogTitle, ProgressIndicator, ProgressRoot } from 'reka-ui'
+import { CollapsibleContent, CollapsibleRoot, CollapsibleTrigger, EditableArea, EditableInput, EditablePreview, EditableRoot, ProgressIndicator, ProgressRoot } from 'reka-ui'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import IconCheck from '~icons/lucide/check'
 import IconChevron from '~icons/lucide/chevron-down'
+import IconChevronUp from '~icons/lucide/chevron-up'
 import IconPencil from '~icons/lucide/pencil'
 import IconPlus from '~icons/lucide/plus'
 import IconSkip from '~icons/lucide/skip-forward'
+import IconTrash from '~icons/lucide/trash-2'
 import IconUndo from '~icons/lucide/undo-2'
 import IconX from '~icons/lucide/x'
 import ConfirmDialog from './ConfirmDialog.vue'
 import type { Draft, DraftState } from './useDraftReview'
 import { useDraftReview } from './useDraftReview'
 
-const { status, drafts, counts, canSave, canUndo, setState, edit, acceptAllUndecided, addStaffDraft, undo, save } = useDraftReview()
+const { status, drafts, counts, canSave, canUndo, setState, edit, acceptAllUndecided, addStaffDraft, removeDraft, undo, save } = useDraftReview()
 
 const queue = computed(() => drafts.value.filter(d => d.state === 'undecided' && !d.pending))
 const currentKey = ref<string>()
@@ -63,35 +66,25 @@ function moveBack(d: Draft) {
   currentKey.value = d.key
 }
 
-// edit modal
-const editing = ref<Draft>()
-const form = ref({ title: '', description: '' })
-function openEdit(d: Draft | undefined) {
-  if (!d)
-    return
-  editing.value = d
-  form.value = { title: d.title, description: d.description }
+// inline editing: E opens the focus card's title; rail items expand to edit in place
+const focusTitle = ref<InstanceType<typeof EditableRoot>>()
+const expandedKey = ref<string>()
+const freshKey = ref<string>()
+function startEdit() {
+  focusTitle.value?.edit()
 }
-function submitEdit(alsoAccept: boolean) {
-  const d = editing.value
-  if (!d)
-    return
-  edit(d.key, form.value)
-  if (alsoAccept && d.state !== 'accepted') {
-    if (current.value?.key === d.key)
-      decide('accepted')
-    else setState(d.key, 'accepted')
-  }
-  editing.value = undefined
+function toggleExpanded(d: Draft) {
+  expandedKey.value = expandedKey.value === d.key ? undefined : d.key
 }
 function addOwn() {
   const key = addStaffDraft()
-  openEdit(drafts.value.find(d => d.key === key))
+  freshKey.value = key
+  expandedKey.value = key
 }
 
 function onKey(e: KeyboardEvent) {
   const t = e.target as HTMLElement | null
-  if (editing.value || t?.closest('input, textarea, [contenteditable], [role="alertdialog"]'))
+  if (t?.closest('input, textarea, [contenteditable], [role="alertdialog"]'))
     return
   if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
     e.preventDefault()
@@ -109,7 +102,7 @@ function onKey(e: KeyboardEvent) {
     skip()
   else if (k === 'e') {
     e.preventDefault()
-    openEdit(current.value)
+    startEdit()
   }
 }
 onMounted(() => window.addEventListener('keydown', onKey))
@@ -146,17 +139,33 @@ const confirmEarlySave = ref(false)
           Draft {{ queue.indexOf(current) + 1 }} of {{ queue.length }} left
           <span v-if="current.edited" class="badge">Edited</span>
         </p>
-        <h3 class="focus-title">
-          {{ current.title }}
-        </h3>
-        <p class="focus-desc">
-          {{ current.description }}
-        </p>
+        <EditableRoot
+          ref="focusTitle"
+          :model-value="current.title"
+          submit-mode="both"
+          select-on-focus
+          @submit="v => edit(current!.key, { title: v ?? '' })"
+        >
+          <EditableArea>
+            <EditablePreview as="h3" class="focus-title editable" title="Click to edit" />
+            <EditableInput class="input focus-title-input" maxlength="120" />
+          </EditableArea>
+        </EditableRoot>
+        <EditableRoot
+          :model-value="current.description"
+          submit-mode="blur"
+          @submit="v => edit(current!.key, { description: v ?? '' })"
+        >
+          <EditableArea>
+            <EditablePreview as="p" class="focus-desc editable" title="Click to edit" />
+            <EditableInput as="textarea" class="input focus-desc-input" rows="3" maxlength="1000" />
+          </EditableArea>
+        </EditableRoot>
         <div class="decide">
           <button class="btn btn--lg" @click="decide('rejected')">
             <IconX /> Reject <span class="kbd">R</span>
           </button>
-          <button class="btn btn--lg btn--ghost" @click="openEdit(current)">
+          <button class="btn btn--lg btn--ghost" @click="startEdit">
             <IconPencil /> Edit <span class="kbd">E</span>
           </button>
           <button v-if="queue.length > 1" class="btn btn--lg btn--ghost" @click="skip">
@@ -197,14 +206,53 @@ const confirmEarlySave = ref(false)
     <aside class="rail" aria-label="Decided drafts">
       <h3>Accepted <span class="count">{{ accepted.length }}</span></h3>
       <ol class="mini-list">
-        <li v-for="d in accepted" :key="d.key" class="mini">
-          <button class="mini-title" :title="d.description" @click="openEdit(d)">
-            {{ d.title }}
-          </button>
-          <span v-if="d.origin === 'staff'" class="badge">Yours</span>
-          <button v-if="d.origin === 'ai'" class="btn btn--ghost icon" aria-label="Move back to queue" @click="moveBack(d)">
-            <IconUndo />
-          </button>
+        <li v-for="d in accepted" :key="d.key" class="mini" :class="{ 'mini--open': expandedKey === d.key }">
+          <div class="mini-head">
+            <button v-if="expandedKey !== d.key" class="mini-title" :aria-expanded="false" @click="toggleExpanded(d)">
+              {{ d.title }}
+            </button>
+            <EditableRoot
+              v-else
+              class="mini-title-edit"
+              :model-value="d.title"
+              submit-mode="both"
+              :start-with-edit-mode="d.key === freshKey"
+              select-on-focus
+              @submit="v => edit(d.key, { title: v ?? '' })"
+            >
+              <EditableArea>
+                <EditablePreview class="mini-edit-title editable" title="Click to edit" />
+                <EditableInput class="input" maxlength="120" />
+              </EditableArea>
+            </EditableRoot>
+            <span v-if="d.origin === 'staff'" class="badge">Yours</span>
+            <button v-if="expandedKey === d.key" class="btn btn--ghost icon" aria-label="Collapse" @click="expandedKey = undefined">
+              <IconChevronUp />
+            </button>
+            <button v-else-if="d.origin === 'ai'" class="btn btn--ghost icon" aria-label="Move back to queue" @click="moveBack(d)">
+              <IconUndo />
+            </button>
+          </div>
+          <div v-if="expandedKey === d.key" class="mini-edit">
+            <EditableRoot
+              :model-value="d.description"
+              submit-mode="blur"
+              @submit="v => edit(d.key, { description: v ?? '' })"
+            >
+              <EditableArea>
+                <EditablePreview class="mini-edit-desc editable" title="Click to edit" />
+                <EditableInput as="textarea" class="input" rows="4" maxlength="1000" />
+              </EditableArea>
+            </EditableRoot>
+            <div class="mini-actions">
+              <button v-if="d.origin === 'ai'" class="btn btn--ghost" @click="moveBack(d)">
+                <IconUndo /> Back to queue
+              </button>
+              <button v-else class="btn btn--ghost" @click="removeDraft(d.key)">
+                <IconTrash /> Remove
+              </button>
+            </div>
+          </div>
         </li>
         <li v-if="!accepted.length" class="empty">
           Nothing yet
@@ -238,36 +286,6 @@ const confirmEarlySave = ref(false)
       </button>
     </div>
   </section>
-
-  <DialogRoot :open="!!editing" @update:open="o => !o && (editing = undefined)">
-    <DialogPortal>
-      <DialogOverlay class="dialog-overlay" />
-      <DialogContent class="dialog-content" @open-auto-focus.prevent>
-        <DialogTitle>Edit draft</DialogTitle>
-        <form class="edit-form" @submit.prevent="submitEdit(false)">
-          <div class="field">
-            <label for="b-title">Title</label>
-            <input id="b-title" v-model="form.title" class="input" maxlength="120" autofocus>
-          </div>
-          <div class="field">
-            <label for="b-desc">Description</label>
-            <textarea id="b-desc" v-model="form.description" class="input" maxlength="1000" />
-          </div>
-          <div class="dialog-actions">
-            <DialogClose class="btn">
-              Cancel
-            </DialogClose>
-            <button class="btn" type="submit">
-              Save edit
-            </button>
-            <button v-if="editing?.state !== 'accepted'" class="btn btn--secondary" type="button" @click="submitEdit(true)">
-              Save & accept
-            </button>
-          </div>
-        </form>
-      </DialogContent>
-    </DialogPortal>
-  </DialogRoot>
 
   <ConfirmDialog
     v-model:open="confirmEarlySave"
@@ -318,15 +336,21 @@ const confirmEarlySave = ref(false)
 .count { font-family: var(--font-code); font-size: var(--font-size-xs); color: var(--color-text-muted); }
 .mini-list { display: grid; gap: var(--space-2xs); }
 .mini {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2xs);
+  display: grid;
+  gap: var(--space-xs);
   padding: var(--space-2xs) var(--space-xs);
   border-radius: var(--radius-md);
   background: var(--color-success-subtle-bg);
   font-size: var(--font-size-sm);
 }
-.mini--rejected { background: transparent; color: var(--color-text-muted); }
+.mini-head { display: flex; align-items: center; gap: var(--space-2xs); }
+.mini--open { padding: var(--space-xs); outline: var(--border-width-thin) solid var(--color-secondary-border); }
+.mini-edit { display: grid; gap: var(--space-xs); }
+.mini-title-edit { flex: 1; min-width: 0; }
+.mini-edit-title { font-weight: var(--font-weight-semibold); }
+.mini-edit-desc { color: var(--color-text-secondary); display: block; }
+.mini-actions { display: flex; justify-content: flex-end; }
+.mini--rejected { display: flex; align-items: center; gap: var(--space-2xs); background: transparent; color: var(--color-text-muted); }
 .mini--rejected s { flex: 1; }
 .mini-title { flex: 1; text-align: start; border: 0; background: none; color: inherit; cursor: pointer; font: inherit; }
 .mini-title:hover { text-decoration: underline; }
@@ -351,5 +375,8 @@ const confirmEarlySave = ref(false)
   animation: enter var(--duration-normal) var(--ease-out);
 }
 .snack .btn { color: var(--color-accent-on-inverse); }
-.edit-form { display: grid; gap: var(--space-md); }
+.editable { cursor: text; border-radius: var(--radius-sm); }
+.editable:hover { background: var(--color-bg-surface-hover); box-shadow: 0 0 0 var(--space-2xs) var(--color-bg-surface-hover); }
+.focus-title-input { font-family: var(--font-heading); font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); }
+.focus-desc-input { font-size: var(--font-size-lg); line-height: var(--line-height-relaxed); }
 </style>
