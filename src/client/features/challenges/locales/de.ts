@@ -15,7 +15,15 @@ export default {
     },
     new: {
       title: 'Neue Challenge',
-      placeholder: 'Platzhalter: Titel und Briefing schreiben, Meilenstein-Entwürfe generieren, prüfen, speichern.',
+      detailsLabel: 'Details der Challenge',
+      editDetails: 'Details bearbeiten',
+    },
+    form: {
+      title: 'Titel der Challenge',
+      brief: 'Briefing',
+      briefHint: 'Was sollen die Teilnehmenden lernen oder bauen? Die KI entwirft Meilensteine in der Sprache des Briefings.',
+      generate: 'Meilensteine generieren',
+      generating: 'Meilensteine werden entworfen…',
     },
     detail: {
       title: 'Challenge',
