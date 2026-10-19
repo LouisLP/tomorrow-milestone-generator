@@ -1,9 +1,13 @@
+<script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+</script>
+
 <template>
-  <main>
-    <h1>Challenges</h1>
-    <p>Placeholder: Challenge list.</p>
-    <RouterLink to="/challenges/new">
-      New challenge
-    </RouterLink>
-  </main>
+  <h1>{{ t('challenges.list.title') }}</h1>
+  <p>{{ t('challenges.list.placeholder') }}</p>
+  <RouterLink to="/challenges/new">
+    {{ t('challenges.list.create') }}
+  </RouterLink>
 </template>

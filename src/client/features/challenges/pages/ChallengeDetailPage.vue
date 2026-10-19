@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
 defineProps<{ id: string }>()
+
+const { t } = useI18n()
 </script>
 
 <template>
-  <main>
-    <h1>Challenge {{ id }}</h1>
-    <p>Placeholder: Challenge detail and its Milestones.</p>
-  </main>
+  <h1>{{ t('challenges.detail.title') }} {{ id }}</h1>
+  <p>{{ t('challenges.detail.placeholder') }}</p>
 </template>

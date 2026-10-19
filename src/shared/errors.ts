@@ -26,6 +26,11 @@ export const errorBody = z.object({
   }),
 })
 
+/** Flattens a zod error into `issues`; the server sends these and the client maps its own the same way. */
+export function zodIssues(error: z.core.$ZodError): Issue[] {
+  return error.issues.map(({ path, code }) => ({ field: path.join('.'), code }))
+}
+
 export type ServerErrorCode = z.infer<typeof serverErrorCode>
 export type Issue = z.infer<typeof issue>
 export type ErrorBody = z.infer<typeof errorBody>
